@@ -1,0 +1,9 @@
+{{define "home-content"}}
+	<div class="home">
+		<h1>Welcome to Lain Template</h1>
+
+		<div hx-get="/api/lain" hx-trigger="load" hx-swap="outerHTML">
+			Let's All Love Lain!
+		</div>
+	</div>
+{{end}}
