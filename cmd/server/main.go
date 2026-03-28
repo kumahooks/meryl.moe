@@ -2,6 +2,7 @@ package main
 
 import (
 	log "log"
+
 	app "meryl.moe/internal"
 )
 

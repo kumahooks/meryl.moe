@@ -2,6 +2,7 @@ package handlers
 
 import (
 	http "net/http"
+
 	templates "meryl.moe/internal/app/templates"
 )
 
@@ -20,14 +21,14 @@ func (handler *BaseHandler) RenderTemplate(writer http.ResponseWriter, name stri
 type PageHandler struct {
 	*BaseHandler
 	PageName string
-	Title	 string
+	Title    string
 }
 
 func NewPageHandler(template *templates.TemplatesManager, pageName string, title string) (*PageHandler, error) {
 	return &PageHandler{
 		BaseHandler: NewBaseHandler(template),
-		PageName: 	 pageName,
-		Title: 		 title,
+		PageName:    pageName,
+		Title:       title,
 	}, nil
 }
 
