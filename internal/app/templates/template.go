@@ -1,8 +1,8 @@
 package templates
 
 import (
-	log "log"
 	template "html/template"
+	log "log"
 	http "net/http"
 )
 
@@ -23,4 +23,3 @@ func NewManager() (*TemplatesManager, error) {
 
 	return &TemplatesManager{templates}, nil
 }
-
