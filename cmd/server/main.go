@@ -1,19 +1,29 @@
+// Package main is the entry point for the web server application.
+// It initializes the server, configures routes, and starts listening for HTTP requests.
 package main
 
 import (
+	fmt "fmt"
 	log "log"
 
-	app "meryl.moe/internal"
+	internal "meryl.moe/internal"
+	config "meryl.moe/internal/config"
 )
 
 func main() {
-	server := app.NewServer()
-
-	if err := server.SetupRoutes(); err != nil {
-		log.Fatal(err)
+	configuration, err := config.Load()
+	if err != nil {
+		log.Fatal("Failed to load config:", err)
 	}
 
-	if err := server.Start(":3000"); err != nil {
-		log.Fatal(err)
+	server := internal.NewServer(configuration)
+
+	if err := server.Initialize(); err != nil {
+		log.Fatal("Failed to initialize server:", err)
+	}
+
+	addr := fmt.Sprintf("%s:%d", configuration.Server.Host, configuration.Server.Port)
+	if err := server.Start(addr); err != nil {
+		log.Fatal("Server failed:", err)
 	}
 }
