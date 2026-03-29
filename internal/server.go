@@ -1,63 +1,75 @@
-package app
+// Package internal provides the core HTTP server functionality using Chi router.
+// It handles server initialization, route registration, static file serving,
+// and coordinates between the routing layer and application handlers.
+package internal
 
 import (
 	log "log"
 	http "net/http"
+	os "os"
 
 	chi "github.com/go-chi/chi/v5"
 	middleware "github.com/go-chi/chi/v5/middleware"
 
-	handlers "meryl.moe/internal/app/handlers"
-	templates "meryl.moe/internal/app/templates"
+	config "meryl.moe/internal/config"
+	home "meryl.moe/internal/modules/home"
+	templates "meryl.moe/internal/platform/templates"
 )
 
 type Server struct {
 	router *chi.Mux
+	config *config.Config
 }
 
-func NewServer() *Server {
-	r := chi.NewRouter()
+func NewServer(configuration *config.Config) *Server {
+	router := chi.NewRouter()
 
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
 
 	return &Server{
-		router: r,
+		router: router,
+		config: configuration,
 	}
 }
 
-func (server *Server) ServeStatic(path string, dir string) {
-	server.router.Handle(path, http.StripPrefix(path, http.FileServer(http.Dir(dir))))
+type fileOnlyFS struct {
+	fileSystem http.FileSystem
 }
 
-func (server *Server) Start(addr string) error {
-	log.Printf("Starting server on %s", addr)
-	return http.ListenAndServe(addr, server.router)
+func (fs fileOnlyFS) Open(name string) (http.File, error) {
+	file, err := fs.fileSystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if stat.IsDir() {
+		file.Close()
+		return nil, os.ErrNotExist
+	}
+
+	return file, nil
 }
 
-func (server *Server) SetupRoutes() error {
+func (server *Server) Initialize() error {
 	templateManager, err := templates.NewManager()
 	if err != nil {
 		return err
 	}
 
-	server.router.Handle("/static/*",
-		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
-	)
+	homeHandler := home.NewHandler(templateManager)
 
-	server.router.Handle("/favicon.ico",
-		http.FileServer(http.Dir("static")),
-	)
-
-	homeHandler, err := handlers.NewPageHandler(templateManager, "home", "Home")
-	if err != nil {
-		return err
-	}
-
-	server.router.Get("/", homeHandler.ServePage)
-	server.router.Get("/api/lain", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Shall we love lain? :B"))
-	})
+	server.RegisterRoutes(homeHandler)
 
 	return nil
+}
+
+func (server *Server) Start(addr string) error {
+	log.Printf("Starting server on %s", addr)
+	return http.ListenAndServe(addr, server.router)
 }
