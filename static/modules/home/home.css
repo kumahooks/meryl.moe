@@ -1,25 +1,26 @@
-body {
-	background-image: url('/static/assets/wallpaper/16_a.jpg');
+.wallpaper {
+	position: fixed;
+	inset: 0;
+	z-index: -1;
 	background-size: cover;
 	background-position: center;
 	background-attachment: fixed;
 }
 
-body::after {
-	content: '';
-	position: fixed;
-	inset: 0;
+.wallpaper-a {
+	background-image: url('/static/assets/wallpaper/16_a.jpg');
+}
+
+.wallpaper-b {
 	background-image: url('/static/assets/wallpaper/16_b.jpg');
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
 	opacity: 0;
-	z-index: -1;
 	animation: wallpaper-reveal 0s 2s forwards;
 }
 
 @keyframes wallpaper-reveal {
-	to { opacity: 1; }
+	to {
+		opacity: 1;
+	}
 }
 
 .home-container {
