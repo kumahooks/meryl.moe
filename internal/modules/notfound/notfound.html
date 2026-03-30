@@ -1,0 +1,30 @@
+{{define "page-title"}}404 - meryl.moe{{end}}
+
+{{define "page-content"}}
+<title>404 - meryl.moe</title>
+<link rel="stylesheet" href="/static/modules/notfound/notfound.css">
+
+<div class="notfound-container">
+	<div class="terminal-card">
+		<div class="line">
+			<span class="terminal-user">kuma</span><span class="terminal-host">@kuma</span> <span class="terminal-path">~/404</span>
+		</div>
+
+		<div class="line">
+			<span class="terminal-arrow">❯</span> <span class="terminal-cmd">ls</span>
+		</div>
+
+		<div class="line">
+			<span class="terminal-user">kuma</span><span class="terminal-host">@kuma</span> <span class="terminal-path">~/404</span>
+		</div>
+
+		<div class="line">
+			<span class="terminal-arrow">❯</span> <a href="/" class="terminal-link" hx-get="/" hx-target="#content" hx-push-url="true">cd ..</a>
+		</div>
+	</div>
+
+	<div class="gif-card">
+		<img src="{{.Gif}}" alt="404">
+	</div>
+</div>
+{{end}}

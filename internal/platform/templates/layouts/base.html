@@ -1,49 +1,28 @@
 {{define "base"}}
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-		<title>{{block "title" .}}meryl.moe{{end}}</title>
-		<link rel="icon" href="/static/assets/icons/favicon.ico">
+	<title>{{block "page-title" .}}meryl.moe{{end}}</title>
+	<link rel="icon" href="/static/assets/icons/favicon.ico">
 
-		<script src="/static/js/htmx.min.js"></script>
+	<script src="/static/js/htmx.min.js"></script>
 
-		<style>
-			.layout {
-				display: flex;
-				min-height: 100vh;
-			}
+	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body { background: #000; }
+	</style>
 
-			.sidebar {
-				width: 200px;
-				border-right: 1px solid #ccc;
-				padding: 1rem;
-			}
+	{{block "page-head" .}}{{end}}
+</head>
 
-			.main-content {
-				flex-grow: 1;
-				padding: 1rem;
-			}
-		</style>
-	</head>
-
-    <body>
-        <div class="layout">
-            <nav class="sidebar">
-                {{template "nav" .}}
-            </nav>
-
-            <main id="content" class="main-content">
-			    {{if eq .Title "Home"}}
-			        {{template "home-content" .}}
-			    {{else}}
-			        {{template "home-content" .}}
-			    {{end}}
-            </main>
-        </div>
-    </body>
+<body>
+	<main id="content">
+		{{template "page-content" .}}
+	</main>
+</body>
 </html>
 {{end}}
 
