@@ -12,7 +12,12 @@ import (
 	middleware "github.com/go-chi/chi/v5/middleware"
 
 	config "meryl.moe/internal/config"
+	about "meryl.moe/internal/modules/about"
+	articles "meryl.moe/internal/modules/articles"
+	cyberia "meryl.moe/internal/modules/cyberia"
 	home "meryl.moe/internal/modules/home"
+	notfound "meryl.moe/internal/modules/notfound"
+	tools "meryl.moe/internal/modules/tools"
 	templates "meryl.moe/internal/platform/templates"
 )
 
@@ -63,8 +68,13 @@ func (server *Server) Initialize() error {
 	}
 
 	homeHandler := home.NewHandler(templateManager)
+	aboutHandler := about.NewHandler(templateManager)
+	articlesHandler := articles.NewHandler(templateManager)
+	toolsHandler := tools.NewHandler(templateManager)
+	cyberiaHandler := cyberia.NewHandler(templateManager)
+	notFoundHandler := notfound.NewHandler(templateManager)
 
-	server.RegisterRoutes(homeHandler)
+	server.RegisterRoutes(homeHandler, aboutHandler, articlesHandler, toolsHandler, cyberiaHandler, notFoundHandler)
 
 	return nil
 }

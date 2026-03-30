@@ -1,0 +1,14 @@
+body {
+	background-image: url('/static/assets/wallpaper/07.jpg');
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+}
+
+.page-content {
+	padding: 2rem;
+	font-family: monospace;
+	font-size: 14px;
+	color: #b0a482;
+	max-width: 600px;
+}

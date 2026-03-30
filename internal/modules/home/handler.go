@@ -8,28 +8,18 @@ import (
 )
 
 type Handler struct {
-	templates *templates.TemplatesManager
+	templates *templates.Manager
 }
 
-func NewHandler(templatesManager *templates.TemplatesManager) *Handler {
-	return &Handler{templates: templatesManager}
+func NewHandler(templateManager *templates.Manager) *Handler {
+	return &Handler{templates: templateManager}
 }
 
-// TODO: this will not scale very well as this will be repeated every module pmuch
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
-	data := map[string]interface{}{"Title": "Home"}
+	pageFile := "internal/modules/home/home.html"
+	data := map[string]any{}
 
-	if request.Header.Get("HX-Request") == "true" {
-		err := handler.templates.Render(writer, "home-content", data)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-		}
-
-		return
-	}
-
-	err := handler.templates.Render(writer, "base", data)
-	if err != nil {
+	if err := handler.templates.Render(writer, request, pageFile, data); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }
