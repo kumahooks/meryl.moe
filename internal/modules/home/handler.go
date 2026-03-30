@@ -16,7 +16,7 @@ func NewHandler(templateManager *templates.Manager) *Handler {
 }
 
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
-	pageFile := "internal/modules/home/home.html"
+	pageFile := "pages/home/home.html"
 	data := map[string]any{}
 
 	if err := handler.templates.Render(writer, request, pageFile, data); err != nil {

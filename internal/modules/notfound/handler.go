@@ -18,7 +18,7 @@ func NewHandler(templateManager *templates.Manager) *Handler {
 }
 
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
-	pageFile := "internal/modules/notfound/notfound.html"
+	pageFile := "pages/notfound/notfound.html"
 	data := map[string]any{
 		"Gif": fmt.Sprintf("/static/assets/gifs/404/%02d.gif", rand.Intn(10)+1),
 	}
