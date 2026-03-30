@@ -1,0 +1,27 @@
+.navbar {
+	font-family: monospace;
+	font-size: 14px;
+	padding: 6px 12px;
+	border-bottom: 1px solid #2a2a2a;
+	background: #0d0d0d;
+}
+
+.navbar-item {
+	display: inline-block;
+	margin-right: 0.8rem;
+}
+
+.navbar-arrow {
+	color: #b90074;
+	margin-right: 2px;
+}
+
+.navbar a {
+	color: #a65e6e;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.navbar a:hover { text-decoration: underline; }
+
+.navbar-slash { color: #b0a482; }

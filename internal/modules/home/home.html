@@ -1,9 +1,30 @@
-{{define "home-content"}}
-	<div class="home">
-		<h1>Welcome to Lain Template</h1>
+{{define "page-head"}}
+<link rel="stylesheet" href="/static/modules/home/home.css">
+{{end}}
 
-		<div hx-get="/api/lain" hx-trigger="load" hx-swap="outerHTML">
-			Let's All Love Lain!
+{{define "page-content"}}
+<title>meryl.moe</title>
+
+<link rel="stylesheet" href="/static/modules/home/home.css">
+
+<div class="home-container">
+	<div class="terminal-card">
+		<div class="line">
+			<span class="terminal-user">kuma</span><span class="terminal-host">@kuma</span> <span class="terminal-path">~/nav</span>
+		</div>
+
+		<div class="line">
+			<span class="terminal-arrow">❯</span> <span class="terminal-cmd">ls</span>
+		</div>
+
+		<div class="ls-line">
+			<a href="/about"    class="terminal-link" hx-get="/about"    hx-target="#content" hx-push-url="true">about<span class="terminal-slash">/</span></a>
+			<a href="/articles" class="terminal-link" hx-get="/articles" hx-target="#content" hx-push-url="true">articles<span class="terminal-slash">/</span></a>
+			<a href="/tools"    class="terminal-link" hx-get="/tools"    hx-target="#content" hx-push-url="true">tools<span class="terminal-slash">/</span></a>
+			<a href="/cyberia"  class="terminal-link" hx-get="/cyberia"  hx-target="#content" hx-push-url="true">cyberia<span class="terminal-slash">/</span></a>
 		</div>
 	</div>
+</div>
+
 {{end}}
+
