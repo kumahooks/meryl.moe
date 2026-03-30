@@ -7,9 +7,10 @@ import (
 	log "log"
 	http "net/http"
 	os "os"
+	time "time"
 
 	chi "github.com/go-chi/chi/v5"
-	middleware "github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 
 	config "meryl.moe/internal/config"
 	about "meryl.moe/internal/modules/about"
@@ -18,6 +19,7 @@ import (
 	home "meryl.moe/internal/modules/home"
 	notfound "meryl.moe/internal/modules/notfound"
 	tools "meryl.moe/internal/modules/tools"
+	appMiddleware "meryl.moe/internal/platform/middleware"
 	templates "meryl.moe/internal/platform/templates"
 )
 
@@ -29,8 +31,9 @@ type Server struct {
 func NewServer(configuration *config.Config) *Server {
 	router := chi.NewRouter()
 
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
+	router.Use(appMiddleware.Security)
 
 	return &Server{
 		router: router,
@@ -62,7 +65,7 @@ func (fs fileOnlyFS) Open(name string) (http.File, error) {
 }
 
 func (server *Server) Initialize() error {
-	templateManager, err := templates.NewManager()
+	templateManager, err := templates.NewManager(server.config.App.Dev)
 	if err != nil {
 		return err
 	}
@@ -81,5 +84,14 @@ func (server *Server) Initialize() error {
 
 func (server *Server) Start(addr string) error {
 	log.Printf("Starting server on %s", addr)
-	return http.ListenAndServe(addr, server.router)
+
+	httpServer := &http.Server{
+		Addr:         addr,
+		Handler:      server.router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	return httpServer.ListenAndServe()
 }
