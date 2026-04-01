@@ -14,6 +14,11 @@
 .navbar-arrow {
 	color: #b90074;
 	margin-right: 2px;
+	visibility: hidden;
+}
+
+.navbar-arrow--active {
+	visibility: visible;
 }
 
 .navbar a {
@@ -22,6 +27,10 @@
 	cursor: pointer;
 }
 
-.navbar a:hover { text-decoration: underline; }
+.navbar a:hover {
+	text-decoration: underline;
+}
 
-.navbar-slash { color: #b0a482; }
+.navbar-slash {
+	color: #b0a482;
+}

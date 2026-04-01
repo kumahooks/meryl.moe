@@ -3,19 +3,19 @@
 
 <header class="navbar">
 	<span class="navbar-item">
-		<span class="navbar-arrow" style="visibility: {{if eq .Page "about"}}visible{{else}}hidden{{end}}">❯</span><a href="/about" hx-get="/about" hx-target="#content" hx-push-url="true">about<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "about"}} navbar-arrow--active{{end}}">❯</span><a href="/about" hx-get="/about" hx-target="#content" hx-push-url="true">about<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow" style="visibility: {{if eq .Page "articles"}}visible{{else}}hidden{{end}}">❯</span><a href="/articles" hx-get="/articles" hx-target="#content" hx-push-url="true">articles<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "articles"}} navbar-arrow--active{{end}}">❯</span><a href="/articles" hx-get="/articles" hx-target="#content" hx-push-url="true">articles<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow" style="visibility: {{if eq .Page "tools"}}visible{{else}}hidden{{end}}">❯</span><a href="/tools" hx-get="/tools" hx-target="#content" hx-push-url="true">tools<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "tools"}} navbar-arrow--active{{end}}">❯</span><a href="/tools" hx-get="/tools" hx-target="#content" hx-push-url="true">tools<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow" style="visibility: {{if eq .Page "cyberia"}}visible{{else}}hidden{{end}}">❯</span><a href="/cyberia" hx-get="/cyberia" hx-target="#content" hx-push-url="true">cyberia<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "cyberia"}} navbar-arrow--active{{end}}">❯</span><a href="/cyberia" hx-get="/cyberia" hx-target="#content" hx-push-url="true">cyberia<span class="navbar-slash">/</span></a>
 	</span>
 </header>
 {{end}}
