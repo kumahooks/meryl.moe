@@ -4,6 +4,7 @@
 package internal
 
 import (
+	fs "io/fs"
 	log "log"
 	http "net/http"
 	os "os"
@@ -23,11 +24,13 @@ import (
 	templates "meryl.moe/internal/platform/templates"
 )
 
+// Server holds the Chi router and application configuration.
 type Server struct {
 	router *chi.Mux
 	config *config.Config
 }
 
+// NewServer creates a Server with global middleware applied.
 func NewServer(configuration *config.Config) *Server {
 	router := chi.NewRouter()
 
@@ -41,6 +44,8 @@ func NewServer(configuration *config.Config) *Server {
 	}
 }
 
+// fileOnlyFS wraps http.FileSystem and rejects directory requests,
+// preventing directory listing on the static file server.
 type fileOnlyFS struct {
 	fileSystem http.FileSystem
 }
@@ -64,8 +69,16 @@ func (fs fileOnlyFS) Open(name string) (http.File, error) {
 	return file, nil
 }
 
+// Initialize builds the template manager and wires all handlers and routes.
 func (server *Server) Initialize() error {
-	templateManager, err := templates.NewManager(server.config.App.Dev)
+	var fileSystem fs.FS
+	if server.config.App.Dev {
+		fileSystem = os.DirFS("internal")
+	} else {
+		fileSystem = assetsFS
+	}
+
+	templateManager, err := templates.NewManager(server.config.App.Dev, fileSystem)
 	if err != nil {
 		return err
 	}
@@ -77,11 +90,19 @@ func (server *Server) Initialize() error {
 	cyberiaHandler := cyberia.NewHandler(templateManager)
 	notFoundHandler := notfound.NewHandler(templateManager)
 
-	server.RegisterRoutes(homeHandler, aboutHandler, articlesHandler, toolsHandler, cyberiaHandler, notFoundHandler)
+	server.RegisterRoutes(
+		homeHandler,
+		aboutHandler,
+		articlesHandler,
+		toolsHandler,
+		cyberiaHandler,
+		notFoundHandler,
+	)
 
 	return nil
 }
 
+// Start binds the server to addr and begins serving requests.
 func (server *Server) Start(addr string) error {
 	log.Printf("Starting server on %s", addr)
 
