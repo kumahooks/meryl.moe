@@ -1,21 +1,29 @@
 {{define "navbar"}}
+{{- /*
+  The <link> below is intentionally inside the component rather than in <head>.
+  Trade-off: technically invalid HTML (link outside head), but required for HTMX
+  fragment swaps - when HTMX replaces #content, this tag travels with the fragment
+  and the browser applies the stylesheet. Moving it to base.html <head> would fix
+  validity but break CSS injection on fragment navigation for pages that include
+  this component.
+*/ -}}
 <link rel="stylesheet" href="/static/platform/components/navbar.css">
 
 <header class="navbar">
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "about"}} navbar-arrow--active{{end}}">❯</span><a href="/about" hx-get="/about" hx-target="#content" hx-push-url="true">about<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "about"}} navbar-arrow--active{{end}}">❯</span><a href="/about">about<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "articles"}} navbar-arrow--active{{end}}">❯</span><a href="/articles" hx-get="/articles" hx-target="#content" hx-push-url="true">articles<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "articles"}} navbar-arrow--active{{end}}">❯</span><a href="/articles">articles<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "tools"}} navbar-arrow--active{{end}}">❯</span><a href="/tools" hx-get="/tools" hx-target="#content" hx-push-url="true">tools<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "tools"}} navbar-arrow--active{{end}}">❯</span><a href="/tools">tools<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "cyberia"}} navbar-arrow--active{{end}}">❯</span><a href="/cyberia" hx-get="/cyberia" hx-target="#content" hx-push-url="true">cyberia<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "cyberia"}} navbar-arrow--active{{end}}">❯</span><a href="/cyberia">cyberia<span class="navbar-slash">/</span></a>
 	</span>
 </header>
 {{end}}

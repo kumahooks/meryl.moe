@@ -14,6 +14,11 @@ import (
 	sync "sync"
 )
 
+// Renderer is the interface handlers use to execute page templates.
+type Renderer interface {
+	Render(writer http.ResponseWriter, request *http.Request, pageFile string, fragment string, data any) error
+}
+
 // Manager holds the base template set (layouts + components) and an fs.FS
 // pointing to the internal/ root.
 // prod: embedded FS (passed from internal package)
@@ -106,9 +111,39 @@ func (templateManager *Manager) resolve(pageFile string) (*template.Template, er
 	return built, nil
 }
 
-// build clones the base template set and parses pageFile into the clone,
-// isolating the page's "page-content" definition from other pages.
+// build constructs a complete template set for pageFile.
+//
+// In dev mode all three layers (layouts, components, page) are parsed fresh from
+// disk on every call so any HTML change is picked up without a restart.
+// In production the pre-parsed base is cloned and only the page file is parsed
 func (templateManager *Manager) build(pageFile string) (*template.Template, error) {
+	if templateManager.isDevelopment {
+		freshTemplate := template.New("")
+
+		if _, err := freshTemplate.ParseFS(
+			templateManager.fileSystem,
+			"platform/templates/layouts/*.html",
+		); err != nil {
+			return nil, fmt.Errorf("failed to parse layouts: %w", err)
+		}
+
+		if _, err := freshTemplate.ParseFS(
+			templateManager.fileSystem,
+			"platform/templates/components/*.html",
+		); err != nil {
+			return nil, fmt.Errorf("failed to parse components: %w", err)
+		}
+
+		if _, err := freshTemplate.ParseFS(
+			templateManager.fileSystem,
+			pageFile,
+		); err != nil {
+			return nil, fmt.Errorf("failed to parse page template %q: %w", pageFile, err)
+		}
+
+		return freshTemplate, nil
+	}
+
 	clonedTemplate, err := templateManager.baseTemplate.Clone()
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone base template set: %w", err)
