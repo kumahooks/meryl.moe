@@ -13,11 +13,12 @@ type Config struct {
 	}
 
 	App struct {
-		Dev bool `envconfig:"DEV" default:"false"`
+		Dev     bool   `envconfig:"DEV" default:"false"`
+		RootDir string `envconfig:"ROOT_DIR" default:"."`
 	}
 
 	Logging struct {
-		FilePath string `envconfig:"LOG_FILE" default:"./logs/app.log"`
+		Dir string `envconfig:"LOG_DIR" default:"./logs"`
 	}
 }
 

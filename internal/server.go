@@ -4,10 +4,17 @@
 package internal
 
 import (
+	context "context"
+	errors "errors"
+	fmt "fmt"
+	io "io"
 	fs "io/fs"
 	log "log"
 	http "net/http"
 	os "os"
+	signal "os/signal"
+	filepath "path/filepath"
+	syscall "syscall"
 	time "time"
 
 	chi "github.com/go-chi/chi/v5"
@@ -58,6 +65,7 @@ func (fs fileOnlyFS) Open(name string) (http.File, error) {
 
 	stat, err := file.Stat()
 	if err != nil {
+		file.Close()
 		return nil, err
 	}
 
@@ -71,9 +79,13 @@ func (fs fileOnlyFS) Open(name string) (http.File, error) {
 
 // Initialize builds the template manager and wires all handlers and routes.
 func (server *Server) Initialize() error {
+	if err := server.initLogging(); err != nil {
+		return err
+	}
+
 	var fileSystem fs.FS
 	if server.config.App.Dev {
-		fileSystem = os.DirFS("internal")
+		fileSystem = os.DirFS(filepath.Join(server.config.App.RootDir, "internal"))
 	} else {
 		fileSystem = assetsFS
 	}
@@ -91,18 +103,40 @@ func (server *Server) Initialize() error {
 	notFoundHandler := notfound.NewHandler(templateManager)
 
 	server.RegisterRoutes(
-		homeHandler,
-		aboutHandler,
-		articlesHandler,
-		toolsHandler,
-		cyberiaHandler,
-		notFoundHandler,
+		home.Routes(homeHandler),
+		about.Routes(aboutHandler),
+		articles.Routes(articlesHandler),
+		tools.Routes(toolsHandler),
+		cyberia.Routes(cyberiaHandler),
+		notfound.Routes(notFoundHandler),
 	)
 
 	return nil
 }
 
+// initLogging opens a date-prefixed log file in the configured directory and
+// routes all log output to both stdout and the file.
+func (server *Server) initLogging() error {
+	logDir := server.config.Logging.Dir
+	if err := os.MkdirAll(logDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create log directory %q: %w", logDir, err)
+	}
+
+	date := time.Now().Format("2006-01-02")
+	logFilePath := filepath.Join(logDir, date+"_app.log")
+
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to open log file %q: %w", logFilePath, err)
+	}
+
+	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+	return nil
+}
+
 // Start binds the server to addr and begins serving requests.
+// Blocks until SIGINT or SIGTERM is received, then drains in-flight requests
+// with a 30-second deadline before returning.
 func (server *Server) Start(addr string) error {
 	log.Printf("Starting server on %s", addr)
 
@@ -114,5 +148,26 @@ func (server *Server) Start(addr string) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	return httpServer.ListenAndServe()
+	shutdownContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	serverErrors := make(chan error, 1)
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErrors <- err
+		}
+	}()
+
+	select {
+	case err := <-serverErrors:
+		return err
+	case <-shutdownContext.Done():
+		stop()
+		log.Printf("Shutting down...")
+		drainContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+		defer cancel()
+
+		return httpServer.Shutdown(drainContext)
+	}
 }

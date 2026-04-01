@@ -3,37 +3,22 @@ package internal
 
 import (
 	http "net/http"
+	filepath "path/filepath"
 
-	about "meryl.moe/internal/modules/about"
-	articles "meryl.moe/internal/modules/articles"
-	cyberia "meryl.moe/internal/modules/cyberia"
-	home "meryl.moe/internal/modules/home"
-	notfound "meryl.moe/internal/modules/notfound"
-	tools "meryl.moe/internal/modules/tools"
+	appRouter "meryl.moe/internal/platform/router"
 )
 
-// RegisterRoutes mounts the static file server and all page handlers onto the router.
-func (server *Server) RegisterRoutes(
-	homeHandler *home.Handler,
-	aboutHandler *about.Handler,
-	articlesHandler *articles.Handler,
-	toolsHandler *tools.Handler,
-	cyberiaHandler *cyberia.Handler,
-	notFoundHandler *notfound.Handler,
-) {
-	fileServer := http.FileServer(fileOnlyFS{fileSystem: http.Dir("static")})
+// RegisterRoutes mounts the static file server and delegates all page routes
+// to the provided registrars. Each module registers its own paths via Routes().
+//
+// Static files are intentionally served from disk (not embedded) so they can be
+// updated without redeploying the binary
+func (server *Server) RegisterRoutes(registrars ...appRouter.RouteRegistrar) {
+	staticDir := filepath.Join(server.config.App.RootDir, "static")
+	fileServer := http.FileServer(fileOnlyFS{fileSystem: http.Dir(staticDir)})
 	server.router.Handle("/static/*", http.StripPrefix("/static/", fileServer))
 
-	server.router.Get("/", homeHandler.Index)
-	server.router.Get("/about", aboutHandler.Index)
-	server.router.Get("/articles", articlesHandler.Index)
-	server.router.Get("/tools", toolsHandler.Index)
-	server.router.Get("/cyberia", cyberiaHandler.Index)
-
-	server.router.NotFound(notFoundHandler.Index)
-
-	// TODO: testing endpoint, remove later
-	server.router.Get("/api/lain", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("Shall we love lain? :B"))
-	})
+	for _, register := range registrars {
+		register(server.router)
+	}
 }
