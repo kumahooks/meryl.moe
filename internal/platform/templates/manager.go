@@ -1,9 +1,9 @@
 // Package templates manages HTML template parsing and rendering.
 //
 // In production (dev=false), templates are served from the embedded FS baked
-// into the binary at compile time
+// into the binary at compile time.
 // In dev mode (dev=true), templates are read from disk on every request so
-// file changes are picked up without restarting
+// file changes are picked up without restarting.
 package templates
 
 import (
@@ -11,14 +11,13 @@ import (
 	template "html/template"
 	fs "io/fs"
 	http "net/http"
-	os "os"
 	sync "sync"
 )
 
 // Manager holds the base template set (layouts + components) and an fs.FS
-// pointing to the template root
-// prod: embedded FS
-// dev: os.DirFS
+// pointing to the internal/ root.
+// prod: embedded FS (passed from internal package)
+// dev: os.DirFS("internal")
 type Manager struct {
 	baseTemplate   *template.Template
 	fileSystem     fs.FS
@@ -27,22 +26,17 @@ type Manager struct {
 	isDevelopment  bool
 }
 
-func NewManager(isDevelopment bool) (*Manager, error) {
-	var fileSystem fs.FS
-
-	if isDevelopment {
-		fileSystem = os.DirFS("internal/platform/templates")
-	} else {
-		fileSystem = templateFS
-	}
-
+// NewManager parses the shared base templates (layouts and components) from fileSystem
+// and returns a Manager ready to render pages. isDevelopment disables the page cache
+// so templates are re-parsed from disk on every request.
+func NewManager(isDevelopment bool, fileSystem fs.FS) (*Manager, error) {
 	base := template.New("")
 
-	if _, err := base.ParseFS(fileSystem, "layouts/*.html"); err != nil {
+	if _, err := base.ParseFS(fileSystem, "platform/templates/layouts/*.html"); err != nil {
 		return nil, err
 	}
 
-	if _, err := base.ParseFS(fileSystem, "components/*.html"); err != nil {
+	if _, err := base.ParseFS(fileSystem, "platform/templates/components/*.html"); err != nil {
 		return nil, err
 	}
 
@@ -79,6 +73,7 @@ func (templateManager *Manager) Render(
 	return pageTemplate.ExecuteTemplate(writer, "base", data)
 }
 
+// resolve returns a cached template in production or builds a fresh one in dev mode.
 func (templateManager *Manager) resolve(pageFile string) (*template.Template, error) {
 	if templateManager.isDevelopment {
 		return templateManager.build(pageFile)
@@ -107,6 +102,8 @@ func (templateManager *Manager) resolve(pageFile string) (*template.Template, er
 	return built, nil
 }
 
+// build clones the base template set and parses pageFile into the clone,
+// isolating the page's "page-content" definition from other pages.
 func (templateManager *Manager) build(pageFile string) (*template.Template, error) {
 	clonedTemplate, err := templateManager.baseTemplate.Clone()
 	if err != nil {

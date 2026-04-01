@@ -5,6 +5,7 @@ import (
 	http "net/http"
 )
 
+// Security sets security-related response headers on every request.
 func Security(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("X-Frame-Options", "DENY")
