@@ -51,11 +51,15 @@ func NewManager(isDevelopment bool, fileSystem fs.FS) (*Manager, error) {
 // Render executes the page template against the request, returning either a
 // full page or a fragment depending on HTMX headers.
 //
-// Every page template must define {{define "page-content"}}.
+// fragment is the template name executed for fragment requests (HX-Request without
+// HX-Boosted). Full page requests always execute "base". Standard page handlers
+// pass "page-content"; fine-grained fragment endpoints pass the specific named
+// define they want to render.
 func (templateManager *Manager) Render(
 	writer http.ResponseWriter,
 	request *http.Request,
 	pageFile string,
+	fragment string,
 	data any,
 ) error {
 	pageTemplate, err := templateManager.resolve(pageFile)
@@ -67,7 +71,7 @@ func (templateManager *Manager) Render(
 	// HTMX can merge <head> (CSS, title) and swap <body>.
 	isFragment := request.Header.Get("HX-Request") == "true" && request.Header.Get("HX-Boosted") != "true"
 	if isFragment {
-		return pageTemplate.ExecuteTemplate(writer, "page-content", data)
+		return pageTemplate.ExecuteTemplate(writer, fragment, data)
 	}
 
 	return pageTemplate.ExecuteTemplate(writer, "base", data)

@@ -22,7 +22,7 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 	pageFile := "modules/cyberia/cyberia.html"
 	data := map[string]any{"Page": "cyberia"}
 
-	if err := handler.templates.Render(writer, request, pageFile, data); err != nil {
+	if err := handler.templates.Render(writer, request, pageFile, "page-content", data); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }
