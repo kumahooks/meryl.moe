@@ -12,6 +12,7 @@ import (
 	tools "meryl.moe/internal/modules/tools"
 )
 
+// RegisterRoutes mounts the static file server and all page handlers onto the router.
 func (server *Server) RegisterRoutes(
 	homeHandler *home.Handler,
 	aboutHandler *about.Handler,
