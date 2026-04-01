@@ -1,7 +1,5 @@
-{{define "page-title"}}404 - meryl.moe{{end}}
-
 {{define "page-content"}}
-<title>404 - meryl.moe</title>
+<title>{{.Title}}</title>
 <link rel="stylesheet" href="/static/modules/notfound/notfound.css">
 
 <div class="notfound-container">
@@ -19,7 +17,7 @@
 		</div>
 
 		<div class="line">
-			<span class="terminal-arrow">❯</span> <a href="/" class="terminal-link" hx-get="/" hx-target="#content" hx-push-url="true">cd ..</a>
+			<span class="terminal-arrow">❯</span> <a href="/" class="terminal-link">cd ..</a>
 		</div>
 	</div>
 

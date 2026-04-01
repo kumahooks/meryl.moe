@@ -3,7 +3,7 @@
 {{end}}
 
 {{define "page-content"}}
-<title>meryl.moe</title>
+<title>{{.Title}}</title>
 <link rel="stylesheet" href="/static/modules/home/home.css">
 
 <div class="wallpaper wallpaper-a"></div>
@@ -20,10 +20,10 @@
 		</div>
 
 		<div class="ls-line">
-			<a href="/about"    class="terminal-link" hx-get="/about"    hx-target="#content" hx-push-url="true">about<span class="terminal-slash">/</span></a>
-			<a href="/articles" class="terminal-link" hx-get="/articles" hx-target="#content" hx-push-url="true">articles<span class="terminal-slash">/</span></a>
-			<a href="/tools"    class="terminal-link" hx-get="/tools"    hx-target="#content" hx-push-url="true">tools<span class="terminal-slash">/</span></a>
-			<a href="/cyberia"  class="terminal-link" hx-get="/cyberia"  hx-target="#content" hx-push-url="true">cyberia<span class="terminal-slash">/</span></a>
+			<a href="/about"    class="terminal-link">about<span class="terminal-slash">/</span></a>
+			<a href="/articles" class="terminal-link">articles<span class="terminal-slash">/</span></a>
+			<a href="/tools"    class="terminal-link">tools<span class="terminal-slash">/</span></a>
+			<a href="/cyberia"  class="terminal-link">cyberia<span class="terminal-slash">/</span></a>
 		</div>
 	</div>
 </div>
