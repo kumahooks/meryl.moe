@@ -83,3 +83,11 @@
 .terminal-slash {
 	color: #b0a482;
 }
+
+@media (max-width: 480px) {
+	.terminal-card .ls-line {
+		display: grid;
+		grid-template-columns: repeat(3, max-content);
+		row-gap: 0;
+	}
+}
