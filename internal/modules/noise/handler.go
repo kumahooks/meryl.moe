@@ -1,14 +1,14 @@
-// Package articles implements the articles page handler.
-package articles
+// Package noise implements the noise page handler.
+package noise
 
 import (
-	http "net/http"
+	"net/http"
 
-	chi "github.com/go-chi/chi/v5"
-	templates "meryl.moe/internal/platform/templates"
+	"github.com/go-chi/chi/v5"
+	"meryl.moe/internal/platform/templates"
 )
 
-// Handler handles requests for the articles page.
+// Handler handles requests for the noise page.
 type Handler struct {
 	renderer templates.Renderer
 }
@@ -18,17 +18,17 @@ func NewHandler(renderer templates.Renderer) *Handler {
 	return &Handler{renderer: renderer}
 }
 
-// Routes registers the articles page route on the given router.
+// Routes registers the noise page route on the given router.
 func Routes(handler *Handler) func(chi.Router) {
 	return func(router chi.Router) {
-		router.Get("/articles", handler.Index)
+		router.Get("/noise", handler.Index)
 	}
 }
 
-// Index renders the articles page.
+// Index renders the noise page.
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
-	pageFile := "modules/articles/articles.html"
-	data := map[string]any{"Page": "articles", "Title": "articles - meryl.moe"}
+	pageFile := "modules/noise/noise.html"
+	data := map[string]any{"Page": "noise", "Title": "noise - meryl.moe"}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

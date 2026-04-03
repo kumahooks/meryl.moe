@@ -2,7 +2,7 @@
 package router
 
 import (
-	chi "github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5"
 )
 
 // RouteRegistrar is a function that registers routes on a chi.Router.

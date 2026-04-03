@@ -2,7 +2,7 @@
 package config
 
 import (
-	envconfig "github.com/kelseyhightower/envconfig"
+	"github.com/kelseyhightower/envconfig"
 )
 
 // Config holds all application configuration populated from environment variables.

@@ -2,10 +2,10 @@
 package home
 
 import (
-	http "net/http"
+	"net/http"
 
-	chi "github.com/go-chi/chi/v5"
-	templates "meryl.moe/internal/platform/templates"
+	"github.com/go-chi/chi/v5"
+	"meryl.moe/internal/platform/templates"
 )
 
 // Handler handles requests for the home page.

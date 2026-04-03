@@ -11,19 +11,23 @@
 
 <header class="navbar">
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "about"}} navbar-arrow--active{{end}}">❯</span><a href="/about">about<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "logs"}} navbar-arrow--active{{end}}">❯</span><a href="/logs">logs<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "articles"}} navbar-arrow--active{{end}}">❯</span><a href="/articles">articles<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "noise"}} navbar-arrow--active{{end}}">❯</span><a href="/noise">noise<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "tools"}} navbar-arrow--active{{end}}">❯</span><a href="/tools">tools<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "bin"}} navbar-arrow--active{{end}}">❯</span><a href="/bin">bin<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
 		<span class="navbar-arrow{{if eq .Page "cyberia"}} navbar-arrow--active{{end}}">❯</span><a href="/cyberia">cyberia<span class="navbar-slash">/</span></a>
+	</span>
+
+	<span class="navbar-item">
+		<span class="navbar-arrow{{if eq .Page "whoami"}} navbar-arrow--active{{end}}">❯</span><a href="/whoami">whoami<span class="navbar-slash">*</span></a>
 	</span>
 </header>
 {{end}}

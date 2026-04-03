@@ -2,13 +2,13 @@
 package notfound
 
 import (
-	fmt "fmt"
-	log "log"
-	rand "math/rand"
-	http "net/http"
+	"fmt"
+	"log"
+	"math/rand"
+	"net/http"
 
-	chi "github.com/go-chi/chi/v5"
-	templates "meryl.moe/internal/platform/templates"
+	"github.com/go-chi/chi/v5"
+	"meryl.moe/internal/platform/templates"
 )
 
 // Handler handles requests for the 404 not found page.

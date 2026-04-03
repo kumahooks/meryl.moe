@@ -3,11 +3,11 @@
 package main
 
 import (
-	fmt "fmt"
-	log "log"
+	"fmt"
+	"log"
 
-	internal "meryl.moe/internal"
-	config "meryl.moe/internal/config"
+	"meryl.moe/internal"
+	"meryl.moe/internal/config"
 )
 
 func main() {
