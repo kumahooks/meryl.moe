@@ -1,14 +1,14 @@
-// Package about implements the about page handler.
-package about
+// Package whoami implements the whoami page handler.
+package whoami
 
 import (
-	http "net/http"
+	"net/http"
 
-	chi "github.com/go-chi/chi/v5"
-	templates "meryl.moe/internal/platform/templates"
+	"github.com/go-chi/chi/v5"
+	"meryl.moe/internal/platform/templates"
 )
 
-// Handler handles requests for the about page.
+// Handler handles requests for the whoami page.
 type Handler struct {
 	renderer templates.Renderer
 }
@@ -18,17 +18,17 @@ func NewHandler(renderer templates.Renderer) *Handler {
 	return &Handler{renderer: renderer}
 }
 
-// Routes registers the about page route on the given router.
+// Routes registers the whoami page route on the given router.
 func Routes(handler *Handler) func(chi.Router) {
 	return func(router chi.Router) {
-		router.Get("/about", handler.Index)
+		router.Get("/whoami", handler.Index)
 	}
 }
 
-// Index renders the about page.
+// Index renders the whoami page.
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
-	pageFile := "modules/about/about.html"
-	data := map[string]any{"Page": "about", "Title": "about - meryl.moe"}
+	pageFile := "modules/whoami/whoami.html"
+	data := map[string]any{"Page": "whoami", "Title": "whoami - meryl.moe"}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

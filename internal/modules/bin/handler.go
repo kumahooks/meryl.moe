@@ -1,5 +1,5 @@
-// Package cyberia implements the cyberia page handler.
-package cyberia
+// Package bin implements the bin page handler.
+package bin
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"meryl.moe/internal/platform/templates"
 )
 
-// Handler handles requests for the cyberia page.
+// Handler handles requests for the bin page.
 type Handler struct {
 	renderer templates.Renderer
 }
@@ -18,17 +18,17 @@ func NewHandler(renderer templates.Renderer) *Handler {
 	return &Handler{renderer: renderer}
 }
 
-// Routes registers the cyberia page route on the given router.
+// Routes registers the bin page route on the given router.
 func Routes(handler *Handler) func(chi.Router) {
 	return func(router chi.Router) {
-		router.Get("/cyberia", handler.Index)
+		router.Get("/bin", handler.Index)
 	}
 }
 
-// Index renders the cyberia page.
+// Index renders the bin page.
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
-	pageFile := "modules/cyberia/cyberia.html"
-	data := map[string]any{"Page": "cyberia", "Title": "cyberia - meryl.moe"}
+	pageFile := "modules/bin/bin.html"
+	data := map[string]any{"Page": "bin", "Title": "bin - meryl.moe"}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

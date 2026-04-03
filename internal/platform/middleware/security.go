@@ -2,7 +2,7 @@
 package middleware
 
 import (
-	http "net/http"
+	"net/http"
 )
 
 // Security sets security-related response headers on every request.

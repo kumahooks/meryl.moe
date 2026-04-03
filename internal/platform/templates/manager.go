@@ -7,11 +7,11 @@
 package templates
 
 import (
-	fmt "fmt"
-	template "html/template"
-	fs "io/fs"
-	http "net/http"
-	sync "sync"
+	"fmt"
+	"html/template"
+	"io/fs"
+	"net/http"
+	"sync"
 )
 
 // Renderer is the interface handlers use to execute page templates.
@@ -35,18 +35,18 @@ type Manager struct {
 // and returns a Manager ready to render pages. isDevelopment disables the page cache
 // so templates are re-parsed from disk on every request.
 func NewManager(isDevelopment bool, fileSystem fs.FS) (*Manager, error) {
-	base := template.New("")
+	baseTemplate := template.New("")
 
-	if _, err := base.ParseFS(fileSystem, "platform/templates/layouts/*.html"); err != nil {
+	if _, err := baseTemplate.ParseFS(fileSystem, "platform/templates/layouts/*.html"); err != nil {
 		return nil, err
 	}
 
-	if _, err := base.ParseFS(fileSystem, "platform/templates/components/*.html"); err != nil {
+	if _, err := baseTemplate.ParseFS(fileSystem, "platform/templates/components/*.html"); err != nil {
 		return nil, err
 	}
 
 	return &Manager{
-		baseTemplate:  base,
+		baseTemplate:  baseTemplate,
 		fileSystem:    fileSystem,
 		pageCache:     make(map[string]*template.Template),
 		isDevelopment: isDevelopment,

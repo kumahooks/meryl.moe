@@ -4,37 +4,39 @@
 package internal
 
 import (
-	context "context"
-	errors "errors"
-	fmt "fmt"
-	io "io"
-	fs "io/fs"
-	log "log"
-	http "net/http"
-	os "os"
-	signal "os/signal"
-	filepath "path/filepath"
-	syscall "syscall"
-	time "time"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
 
-	chi "github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 
-	config "meryl.moe/internal/config"
-	about "meryl.moe/internal/modules/about"
-	articles "meryl.moe/internal/modules/articles"
-	cyberia "meryl.moe/internal/modules/cyberia"
-	home "meryl.moe/internal/modules/home"
-	notfound "meryl.moe/internal/modules/notfound"
-	tools "meryl.moe/internal/modules/tools"
-	appMiddleware "meryl.moe/internal/platform/middleware"
-	templates "meryl.moe/internal/platform/templates"
+	"meryl.moe/internal/config"
+	"meryl.moe/internal/modules/bin"
+	"meryl.moe/internal/modules/cyberia"
+	"meryl.moe/internal/modules/home"
+	"meryl.moe/internal/modules/logs"
+	"meryl.moe/internal/modules/noise"
+	"meryl.moe/internal/modules/notfound"
+	"meryl.moe/internal/modules/whoami"
+	"meryl.moe/internal/platform/middleware"
+	"meryl.moe/internal/platform/templates"
 )
 
 // Server holds the Chi router and application configuration.
 type Server struct {
-	router *chi.Mux
-	config *config.Config
+	router  *chi.Mux
+	config  *config.Config
+	logFile io.Closer
 }
 
 // NewServer creates a Server with global middleware applied.
@@ -43,7 +45,8 @@ func NewServer(configuration *config.Config) *Server {
 
 	router.Use(chiMiddleware.Logger)
 	router.Use(chiMiddleware.Recoverer)
-	router.Use(appMiddleware.Security)
+
+	router.Use(middleware.Security)
 
 	return &Server{
 		router: router,
@@ -57,8 +60,8 @@ type fileOnlyFS struct {
 	fileSystem http.FileSystem
 }
 
-func (fs fileOnlyFS) Open(name string) (http.File, error) {
-	file, err := fs.fileSystem.Open(name)
+func (fileOnly fileOnlyFS) Open(name string) (http.File, error) {
+	file, err := fileOnly.fileSystem.Open(name)
 	if err != nil {
 		return nil, err
 	}
@@ -79,15 +82,17 @@ func (fs fileOnlyFS) Open(name string) (http.File, error) {
 
 // Initialize builds the template manager and wires all handlers and routes.
 func (server *Server) Initialize() error {
-	if err := server.initLogging(); err != nil {
+	logFile, err := server.initLogging()
+	if err != nil {
 		return err
 	}
+	server.logFile = logFile
 
 	var fileSystem fs.FS
 	if server.config.App.Dev {
 		fileSystem = os.DirFS(filepath.Join(server.config.App.RootDir, "internal"))
 	} else {
-		fileSystem = assetsFS
+		fileSystem = templatesEmbedFS
 	}
 
 	templateManager, err := templates.NewManager(server.config.App.Dev, fileSystem)
@@ -96,17 +101,19 @@ func (server *Server) Initialize() error {
 	}
 
 	homeHandler := home.NewHandler(templateManager)
-	aboutHandler := about.NewHandler(templateManager)
-	articlesHandler := articles.NewHandler(templateManager)
-	toolsHandler := tools.NewHandler(templateManager)
+	whoamiHandler := whoami.NewHandler(templateManager)
+	logsHandler := logs.NewHandler(templateManager)
+	noiseHandler := noise.NewHandler(templateManager)
+	binHandler := bin.NewHandler(templateManager)
 	cyberiaHandler := cyberia.NewHandler(templateManager)
 	notFoundHandler := notfound.NewHandler(templateManager)
 
 	server.RegisterRoutes(
 		home.Routes(homeHandler),
-		about.Routes(aboutHandler),
-		articles.Routes(articlesHandler),
-		tools.Routes(toolsHandler),
+		whoami.Routes(whoamiHandler),
+		logs.Routes(logsHandler),
+		noise.Routes(noiseHandler),
+		bin.Routes(binHandler),
 		cyberia.Routes(cyberiaHandler),
 		notfound.Routes(notFoundHandler),
 	)
@@ -116,10 +123,11 @@ func (server *Server) Initialize() error {
 
 // initLogging opens a date-prefixed log file in the configured directory and
 // routes all log output to both stdout and the file.
-func (server *Server) initLogging() error {
+// The caller is responsible for closing the returned io.Closer when done.
+func (server *Server) initLogging() (io.Closer, error) {
 	logDir := server.config.Logging.Dir
 	if err := os.MkdirAll(logDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create log directory %q: %w", logDir, err)
+		return nil, fmt.Errorf("failed to create log directory %q: %w", logDir, err)
 	}
 
 	date := time.Now().Format("2006-01-02")
@@ -127,11 +135,11 @@ func (server *Server) initLogging() error {
 
 	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		return fmt.Errorf("failed to open log file %q: %w", logFilePath, err)
+		return nil, fmt.Errorf("failed to open log file %q: %w", logFilePath, err)
 	}
 
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
-	return nil
+	return logFile, nil
 }
 
 // Start binds the server to addr and begins serving requests.
@@ -163,11 +171,16 @@ func (server *Server) Start(addr string) error {
 		return err
 	case <-shutdownContext.Done():
 		stop()
-		log.Printf("Shutting down...")
-		drainContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
+		log.Printf("Shutting down...")
+
+		drainContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		return httpServer.Shutdown(drainContext)
+		err := httpServer.Shutdown(drainContext)
+
+		server.logFile.Close()
+
+		return err
 	}
 }
