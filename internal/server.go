@@ -27,6 +27,7 @@ import (
 	"meryl.moe/internal/modules/logs"
 	"meryl.moe/internal/modules/noise"
 	"meryl.moe/internal/modules/notfound"
+	"meryl.moe/internal/modules/relay"
 	"meryl.moe/internal/modules/whoami"
 	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
@@ -106,6 +107,7 @@ func (server *Server) Initialize() error {
 	noiseHandler := noise.NewHandler(templateManager)
 	binHandler := bin.NewHandler(templateManager)
 	cyberiaHandler := cyberia.NewHandler(templateManager)
+	relayHandler := relay.NewHandler(templateManager)
 	notFoundHandler := notfound.NewHandler(templateManager)
 
 	server.RegisterRoutes(
@@ -115,6 +117,7 @@ func (server *Server) Initialize() error {
 		noise.Routes(noiseHandler),
 		bin.Routes(binHandler),
 		cyberia.Routes(cyberiaHandler),
+		relay.Routes(relayHandler),
 		notfound.Routes(notFoundHandler),
 	)
 

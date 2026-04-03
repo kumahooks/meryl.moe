@@ -1,14 +1,48 @@
-body {
-	background-image: url('/static/assets/wallpaper/01.jpg');
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
-}
-
-.page-content {
+.bin-container {
 	padding: 2rem;
 	font-family: monospace;
 	font-size: 14px;
+	max-width: 640px;
+}
+
+.bin-list {
+	list-style: none;
+}
+
+.bin-entry {
+	display: flex;
+	align-items: baseline;
+	gap: 1.5rem;
+	padding: 0.4rem 0;
+	border-bottom: 1px solid #1a1a1a;
+}
+
+.bin-entry:first-child {
+	border-top: 1px solid #1a1a1a;
+}
+
+.bin-name {
+	color: #a65e6e;
+	text-decoration: none;
+	white-space: nowrap;
+	min-width: 10ch;
+}
+
+.bin-name:hover {
+	text-decoration: underline;
+}
+
+.bin-marker {
 	color: #b0a482;
-	max-width: 600px;
+}
+
+.bin-desc {
+	color: #5c5c5c;
+}
+
+@media (max-width: 480px) {
+	.bin-entry {
+		flex-direction: column;
+		gap: 0.2rem;
+	}
 }
