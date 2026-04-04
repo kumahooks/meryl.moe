@@ -8,9 +8,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=kuma
 WorkingDirectory=/opt/meryl.moe
-Environment=HOST=0.0.0.0
+Environment=HOST=127.0.0.1
 Environment=PORT=3000
 Environment=LOG_DIR=/opt/meryl.moe/logs
 ExecStart=/opt/meryl.moe/server
