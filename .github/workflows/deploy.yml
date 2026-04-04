@@ -17,7 +17,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Build
-        run: GOOS=linux GOARCH=amd64 go build -o server ./cmd/server/main.go
+        run: GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o server ./cmd/server/main.go
 
       - name: Set up SSH
         run: |
@@ -25,18 +25,19 @@ jobs:
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config << 'EOF'
+          Host vps
+            HostName ${{ secrets.SSH_HOST }}
+            User ${{ secrets.SSH_USER }}
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking yes
+          EOF
 
-      - name: Upload binary
+      - name: Upload artifacts
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl stop merylmoe"
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no server ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/server
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl start merylmoe"
+          scp server vps:/opt/meryl.moe/server.new
+          rsync -az --delete static/ vps:/opt/meryl.moe/static/
+          scp deploy/merylmoe.service vps:/etc/systemd/system/merylmoe.service
 
-      - name: Upload static assets
-        run: rsync -az --delete static/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/static/
-
-      - name: Upload systemd unit
-        run: scp deploy/merylmoe.service ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/etc/systemd/system/merylmoe.service
-
-      - name: Restart service
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl daemon-reload && systemctl restart merylmoe"
+      - name: Swap and restart
+        run: ssh vps "mv /opt/meryl.moe/server.new /opt/meryl.moe/server && systemctl daemon-reload && systemctl restart merylmoe"
