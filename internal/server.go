@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -29,15 +30,17 @@ import (
 	"meryl.moe/internal/modules/notfound"
 	"meryl.moe/internal/modules/relay"
 	"meryl.moe/internal/modules/whoami"
+	"meryl.moe/internal/platform/db"
 	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
 )
 
 // Server holds the Chi router and application configuration.
 type Server struct {
-	router  *chi.Mux
-	config  *config.Config
-	logFile io.Closer
+	router   *chi.Mux
+	config   *config.Config
+	logFile  io.Closer
+	database *sql.DB
 }
 
 // NewServer creates a Server with global middleware applied.
@@ -87,7 +90,20 @@ func (server *Server) Initialize() error {
 	if err != nil {
 		return err
 	}
+
 	server.logFile = logFile
+	log.Printf("logging: initialized")
+
+	if err = os.MkdirAll(filepath.Dir(server.config.DB.Path), 0o755); err != nil {
+		return fmt.Errorf("create database directory: %w", err)
+	}
+
+	database, err := db.Open(server.config.DB.Path)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+
+	server.database = database
 
 	var fileSystem fs.FS
 	if server.config.App.Dev {
@@ -100,6 +116,8 @@ func (server *Server) Initialize() error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("templates: initialized (dev=%v)", server.config.App.Dev)
 
 	homeHandler := home.NewHandler(templateManager)
 	whoamiHandler := whoami.NewHandler(templateManager)
@@ -120,6 +138,8 @@ func (server *Server) Initialize() error {
 		relay.Routes(relayHandler),
 		notfound.Routes(notFoundHandler),
 	)
+
+	log.Printf("routes: registered")
 
 	return nil
 }
@@ -142,6 +162,7 @@ func (server *Server) initLogging() (io.Closer, error) {
 	}
 
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+
 	return logFile, nil
 }
 
@@ -171,6 +192,9 @@ func (server *Server) Start(addr string) error {
 
 	select {
 	case err := <-serverErrors:
+		server.logFile.Close()
+		server.database.Close()
+
 		return err
 	case <-shutdownContext.Done():
 		stop()
@@ -183,6 +207,7 @@ func (server *Server) Start(addr string) error {
 		err := httpServer.Shutdown(drainContext)
 
 		server.logFile.Close()
+		server.database.Close()
 
 		return err
 	}

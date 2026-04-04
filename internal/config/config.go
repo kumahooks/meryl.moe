@@ -9,16 +9,20 @@ import (
 type Config struct {
 	Server struct {
 		Port int    `envconfig:"PORT" default:"3000"`
-		Host string `envconfig:"HOST" default:"localhost"`
+		Host string `envconfig:"HOST" default:"127.0.0.1"`
 	}
 
 	App struct {
-		Dev     bool   `envconfig:"DEV" default:"false"`
+		Dev     bool   `envconfig:"DEV" default:"true"`
 		RootDir string `envconfig:"ROOT_DIR" default:"."`
 	}
 
 	Logging struct {
 		Dir string `envconfig:"LOG_DIR" default:"./logs"`
+	}
+
+	DB struct {
+		Path string `envconfig:"DB_PATH" default:"./data/meryl.db"`
 	}
 }
 

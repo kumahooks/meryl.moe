@@ -3,3 +3,4 @@
 .gitignore*
 tmp/*
 logs/*
+data/*
