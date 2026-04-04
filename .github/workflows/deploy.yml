@@ -37,7 +37,6 @@ jobs:
         run: |
           scp server vps:/opt/meryl.moe/server.new
           rsync -az --delete static/ vps:/opt/meryl.moe/static/
-          scp deploy/merylmoe.service vps:/etc/systemd/system/merylmoe.service
 
       - name: Swap and restart
-        run: ssh vps "mv /opt/meryl.moe/server.new /opt/meryl.moe/server && systemctl daemon-reload && systemctl restart merylmoe"
+        run: ssh vps "mv /opt/meryl.moe/server.new /opt/meryl.moe/server && systemctl restart merylmoe"

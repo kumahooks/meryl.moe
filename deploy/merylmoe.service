@@ -1,3 +1,7 @@
+# To deploy manually:
+#   scp deploy/merylmoe.service vps:/etc/systemd/system/merylmoe.service
+#   ssh vps "systemctl daemon-reload && systemctl restart merylmoe"
+
 [Unit]
 Description=meryl.moe web server
 After=network.target
