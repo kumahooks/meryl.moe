@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: GOOS=linux GOARCH=amd64 go build -o server ./cmd/server/main.go
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload binary
+        run: scp server ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/server
+
+      - name: Upload static assets
+        run: rsync -az --delete static/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/static/
+
+      - name: Upload systemd unit
+        run: scp deploy/merylmoe.service ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/etc/systemd/system/merylmoe.service
+
+      - name: Restart service
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl daemon-reload && systemctl restart merylmoe"
