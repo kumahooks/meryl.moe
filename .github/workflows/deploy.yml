@@ -27,7 +27,10 @@ jobs:
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Upload binary
-        run: scp server ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/server
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl stop merylmoe"
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no server ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/server
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl start merylmoe"
 
       - name: Upload static assets
         run: rsync -az --delete static/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/meryl.moe/static/
