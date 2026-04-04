@@ -1,7 +1,13 @@
 .relay-container {
+	position: relative;
 	height: calc(100vh - 33px);
 	display: flex;
 	flex-direction: column;
+}
+
+.relay-container--dragover .relay-editor {
+	outline: 1px solid #804654;
+	outline-offset: -1px;
 }
 
 .relay-editor {
@@ -68,4 +74,68 @@
 	font-family: monospace;
 	font-size: 12px;
 	color: #5c5c5c;
+}
+
+.relay-dialog-overlay {
+	display: none;
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.75);
+	align-items: center;
+	justify-content: center;
+	z-index: 10;
+}
+
+.relay-dialog-overlay--visible {
+	display: flex;
+}
+
+.relay-dialog {
+	background: #111;
+	border: 1px solid #2a2a2a;
+	padding: 1.5rem 2rem;
+	font-family: monospace;
+	font-size: 13px;
+	color: #b0a482;
+	max-width: 420px;
+	width: 90%;
+}
+
+.relay-dialog-message {
+	margin: 0 0 0.25rem;
+	color: #fff;
+}
+
+.relay-dialog-filename {
+	color: #804654;
+}
+
+.relay-dialog-sub {
+	margin: 0 0 1.25rem;
+	color: #5c5c5c;
+}
+
+.relay-dialog-actions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.relay-dialog-btn {
+	background: none;
+	border: 1px solid #2a2a2a;
+	color: #b0a482;
+	font-family: monospace;
+	font-size: 12px;
+	padding: 0.3rem 1rem;
+	cursor: pointer;
+}
+
+.relay-dialog-btn--confirm {
+	border-color: #804654;
+	color: #804654;
+}
+
+.relay-dialog-btn:focus {
+	outline: 1px solid #804654;
+	outline-offset: 2px;
 }

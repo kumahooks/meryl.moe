@@ -2,15 +2,21 @@ import { compress, decompress } from '/static/js/codec.js';
 
 class RelayEditor {
 	#pendingCompression = null;
+	#pendingFileContent = null;
+	#dragCounter = 0;
 
 	#textarea;
 	#gutter;
 	#charcount;
+	#dialogOverlay;
+	#dialogFilename;
 
 	constructor(root) {
 		this.#textarea = root.querySelector('#relay-input');
 		this.#gutter = root.querySelector('#relay-gutter');
 		this.#charcount = root.querySelector('#relay-charcount');
+		this.#dialogOverlay = root.querySelector('.relay-dialog-overlay');
+		this.#dialogFilename = root.querySelector('.relay-dialog-filename');
 
 		this.#restoreFromUrl();
 		this.#updateGutter();
@@ -76,6 +82,30 @@ class RelayEditor {
 		});
 	}
 
+	#showDialog(filename, content) {
+		this.#pendingFileContent = content;
+		this.#dialogFilename.textContent = filename;
+		this.#dialogOverlay.classList.add('relay-dialog-overlay--visible');
+		this.#dialogOverlay.querySelector('.relay-dialog-btn--confirm').focus();
+	}
+
+	#hideDialog() {
+		this.#dialogOverlay.classList.remove('relay-dialog-overlay--visible');
+		this.#pendingFileContent = null;
+		this.#textarea.focus();
+	}
+
+	#confirmLoad() {
+		this.#textarea.focus();
+		this.#textarea.select();
+
+		// This is deprecated, but is there even an alternative?
+		document.execCommand('insertText', false, this.#pendingFileContent);
+
+		this.#hideDialog();
+		this.#textarea.dispatchEvent(new Event('input'));
+	}
+
 	#bindEvents() {
 		this.#textarea.addEventListener('keydown', event => this.#onKeydown(event));
 
@@ -87,6 +117,42 @@ class RelayEditor {
 
 		document.addEventListener('selectionchange', () => {
 			if (document.activeElement === this.#textarea) this.#updateGutter();
+		});
+
+		const container = this.#textarea.closest('.relay-container');
+
+		container.addEventListener('dragenter', event => {
+			event.preventDefault();
+			this.#dragCounter++;
+			container.classList.add('relay-container--dragover');
+		});
+
+		container.addEventListener('dragleave', () => {
+			this.#dragCounter--;
+			if (this.#dragCounter === 0) container.classList.remove('relay-container--dragover');
+		});
+
+		container.addEventListener('dragover', event => event.preventDefault());
+
+		container.addEventListener('drop', event => {
+			event.preventDefault();
+			this.#dragCounter = 0;
+			container.classList.remove('relay-container--dragover');
+
+			const file = event.dataTransfer.files[0];
+			if (!file) return;
+
+			const reader = new FileReader();
+			reader.onload = () => this.#showDialog(file.name, reader.result);
+			reader.readAsText(file);
+		});
+
+		this.#dialogOverlay.querySelector('.relay-dialog-btn--confirm').addEventListener('click', () => this.#confirmLoad());
+		this.#dialogOverlay.querySelector('.relay-dialog-btn--cancel').addEventListener('click', () => this.#hideDialog());
+
+		this.#dialogOverlay.addEventListener('keydown', event => {
+			if (event.key === 'Enter') this.#confirmLoad();
+			if (event.key === 'Escape') this.#hideDialog();
 		});
 	}
 }
