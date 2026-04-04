@@ -1,34 +1,41 @@
-const textarea = document.getElementById('relay-input');
-const charcount = document.getElementById('relay-charcount');
+function init() {
+	const textarea = document.getElementById('relay-input');
+	if (!textarea) return;
 
-const inputData = new URLSearchParams(location.search).get('data');
-if (inputData) {
-	decompress(inputData).then(data => {
-		textarea.value = data;
-		charcount.textContent = data.length;
+	const charcount = document.getElementById('relay-charcount');
+
+	const inputData = new URLSearchParams(location.search).get('data');
+	if (inputData) {
+		decompress(inputData).then(data => {
+			textarea.value = data;
+			charcount.textContent = data.length;
+		});
+	}
+
+	let pendingCompression = null;
+
+	textarea.addEventListener('input', async () => {
+		charcount.textContent = textarea.value.length;
+
+		pendingCompression?.abort();
+
+		if (!textarea.value) {
+			history.replaceState(null, '', location.pathname);
+			return;
+		}
+
+		pendingCompression = new AbortController();
+		const { signal } = pendingCompression;
+
+		const compressed = await compress(textarea.value);
+		if (!signal.aborted) {
+			history.replaceState(null, '', `${location.pathname}?data=${compressed}`);
+		}
 	});
 }
 
-let pendingCompression = null;
-
-textarea.addEventListener('input', async () => {
-	charcount.textContent = textarea.value.length;
-
-	pendingCompression?.abort();
-
-	if (!textarea.value) {
-		history.replaceState(null, '', location.pathname);
-		return;
-	}
-
-	pendingCompression = new AbortController();
-	const { signal } = pendingCompression;
-
-	const compressed = await compress(textarea.value);
-	if (!signal.aborted) {
-		history.replaceState(null, '', `${location.pathname}?data=${compressed}`);
-	}
-});
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('htmx:afterSettle', init);
 
 async function compress(text) {
 	const stream = new CompressionStream('deflate-raw');
@@ -60,4 +67,3 @@ function toBase64url(bytes) {
 function fromBase64url(base64url) {
 	return Uint8Array.from(atob(base64url.replaceAll('-', '+').replaceAll('_', '/')), c => c.charCodeAt(0));
 }
-
