@@ -1,0 +1,16 @@
+[Unit]
+Description=meryl.moe web server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/meryl.moe
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+Environment=LOG_DIR=/opt/meryl.moe/logs
+ExecStart=/opt/meryl.moe/server
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
