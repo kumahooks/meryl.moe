@@ -5,7 +5,10 @@
 {{template "navbar" .}}
 
 <div class="relay-container">
-	<textarea id="relay-input" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"></textarea>
+	<div class="relay-editor">
+		<div class="relay-gutter" id="relay-gutter"></div>
+		<textarea id="relay-input" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"></textarea>
+	</div>
 
 	<div class="relay-statusline">
 		<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
