@@ -1,4 +1,4 @@
-import { compress, decompress } from '/static/js/codec.js';
+import { compress, decompress } from '/static/modules/relay/codec.js';
 
 class RelayEditor {
 	#pendingCompression = null;
