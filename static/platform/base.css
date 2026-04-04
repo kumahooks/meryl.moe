@@ -7,3 +7,17 @@
 body {
 	background: #000;
 }
+
+.wallpaper {
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+}
+
+[data-wallpaper-src] {
+	opacity: 0;
+	transition: opacity 0.3s ease-in;
+}

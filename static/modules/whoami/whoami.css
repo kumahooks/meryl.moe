@@ -1,8 +1,5 @@
-body {
+.wallpaper {
 	background-image: url('/static/assets/wallpaper/07.jpg');
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
 }
 
 .page-content {
