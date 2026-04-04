@@ -159,11 +159,13 @@ class RelayEditor {
 
 function init() {
 	const container = document.querySelector('.relay-container');
-	if (!container) return;
+	if (!container || container.dataset.relayInitialized) return;
 
+	container.dataset.relayInitialized = 'true';
 	new RelayEditor(container);
 }
 
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('htmx:afterSettle', init);
+init();
 
