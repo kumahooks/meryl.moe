@@ -16,6 +16,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Test
+        run: go test ./...
+
       - name: Build
         run: GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o server ./cmd/server/main.go
 
