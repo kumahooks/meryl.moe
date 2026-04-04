@@ -3,18 +3,59 @@ function init() {
 	if (!textarea) return;
 
 	const charcount = document.getElementById('relay-charcount');
+	const gutter = document.getElementById('relay-gutter');
+
+	function updateGutter() {
+		const lines = textarea.value.split('\n');
+		const currentLine = textarea.value.slice(0, textarea.selectionStart).split('\n').length;
+
+		gutter.innerHTML = lines.map((_, index) => {
+			const distance = Math.abs(index + 1 - currentLine);
+			const isCurrent = distance === 0;
+
+			return `<span class="relay-line-number${isCurrent ? ' relay-line-number--current' : ''}">${isCurrent ? currentLine : distance}</span>`;
+		}).join('');
+
+		gutter.scrollTop = textarea.scrollTop;
+	}
 
 	const inputData = new URLSearchParams(location.search).get('data');
 	if (inputData) {
 		decompress(inputData).then(data => {
 			textarea.value = data;
 			charcount.textContent = data.length;
+			updateGutter();
 		});
 	}
+
+	updateGutter();
+
+	textarea.addEventListener('keydown', (event) => {
+		if (event.key !== 'Tab') return;
+
+		event.preventDefault();
+
+		const start = textarea.selectionStart;
+		const end = textarea.selectionEnd;
+
+		textarea.value = textarea.value.slice(0, start) + '\t' + textarea.value.slice(end);
+		textarea.selectionStart = textarea.selectionEnd = start + 1;
+		textarea.dispatchEvent(new Event('input'));
+	});
+
+	textarea.addEventListener('scroll', () => {
+		gutter.scrollTop = textarea.scrollTop;
+	});
+
+	document.addEventListener('selectionchange', () => {
+		if (document.activeElement === textarea) updateGutter();
+	});
+
 
 	let pendingCompression = null;
 
 	textarea.addEventListener('input', async () => {
+		updateGutter();
 		charcount.textContent = textarea.value.length;
 
 		pendingCompression?.abort();
@@ -67,3 +108,4 @@ function toBase64url(bytes) {
 function fromBase64url(base64url) {
 	return Uint8Array.from(atob(base64url.replaceAll('-', '+').replaceAll('_', '/')), c => c.charCodeAt(0));
 }
+

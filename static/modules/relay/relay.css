@@ -4,9 +4,37 @@
 	flex-direction: column;
 }
 
+.relay-editor {
+	flex: 1;
+	display: flex;
+	overflow: hidden;
+}
+
+.relay-gutter {
+	overflow: hidden;
+	background: #000;
+	font-family: monospace;
+	font-size: 14px;
+	line-height: 1.5;
+	padding: 1rem 0.75rem 1rem 1rem;
+	text-align: right;
+	user-select: none;
+	border-top: 1px solid #1a1a1a;
+}
+
+.relay-line-number {
+	display: block;
+	color: #2a2a2a;
+}
+
+.relay-line-number--current {
+	color: #804654;
+}
+
 .relay-textarea {
 	flex: 1;
 	resize: none;
+	overflow-y: auto;
 	background: #000;
 	color: #b0a482;
 	font-family: monospace;
@@ -16,6 +44,8 @@
 	border: none;
 	border-top: 1px solid #1a1a1a;
 	outline: none;
+	caret-color: #804654;
+	tab-size: 4;
 }
 
 .relay-textarea::placeholder {
