@@ -45,6 +45,8 @@
 	border-top: 1px solid #1a1a1a;
 	outline: none;
 	caret-color: #804654;
+	caret-shape: block;
+	caret-animation: none;
 	tab-size: 4;
 }
 
@@ -52,24 +54,17 @@
 	color: #2a2a2a;
 }
 
-.relay-statusline {
-	background: #0d0d0d;
-	border-top: 1px solid #1a1a1a;
-	height: 22px;
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	padding: 0 1rem;
-	font-family: monospace;
-	font-size: 12px;
-	color: #5c5c5c;
+.relay-container--insert .relay-modeline {
+	display: none;
 }
 
 .relay-modeline {
 	background: #111;
+	border-top: 1px solid #1a1a1a;
 	height: 24px;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 }
 
 .relay-mode {
@@ -83,4 +78,11 @@
 	font-size: 12px;
 	font-weight: bold;
 	letter-spacing: 0.08em;
+}
+
+.relay-stat {
+	padding: 0 1rem;
+	font-family: monospace;
+	font-size: 12px;
+	color: #5c5c5c;
 }
