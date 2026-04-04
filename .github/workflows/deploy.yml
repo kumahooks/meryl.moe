@@ -16,6 +16,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Test
+        run: go test ./...
+
       - name: Build
         run: GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o server ./cmd/server/main.go
 
@@ -24,11 +27,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           cat >> ~/.ssh/config << 'EOF'
           Host vps
             HostName ${{ secrets.SSH_HOST }}
             User ${{ secrets.SSH_USER }}
+            Port ${{ secrets.SSH_PORT }}
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking yes
           EOF
@@ -39,4 +43,4 @@ jobs:
           rsync -az --delete static/ vps:/opt/meryl.moe/static/
 
       - name: Swap and restart
-        run: ssh vps "mv /opt/meryl.moe/server.new /opt/meryl.moe/server && systemctl restart merylmoe"
+        run: ssh vps "mv /opt/meryl.moe/server.new /opt/meryl.moe/server && sudo systemctl restart merylmoe"
