@@ -9,29 +9,50 @@ const GLITCH_CHARS = '/\\|-·×#%@!?';
 
 class PageTransition {
 	#typewriterTimer = null;
+	#pendingLoaderTimer = null;
+	#requestInFlight = false;
 	#lineIndex = 0;
 	#generation = 0;
 	#textElement = null;
 
 	constructor() {
-		this.#loadWallpapers();
 		this.#bindEvents();
 	}
 
+	#log(...args) {
+		console.log('[PageTransition]', ...args);
+	}
+
+	#minimumDelay(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
 	#loadWallpapers() {
-		document.querySelectorAll('[data-wallpaper-src]').forEach(element => {
-			const image = new Image();
-			image.src = element.dataset.wallpaperSrc;
+		const elements = Array.from(document.querySelectorAll('[data-wallpaper-src]'));
 
-			if (image.complete) {
-				element.style.opacity = '1';
-			} else {
-				element.style.opacity = '0';
+		let allComplete = true;
 
-				image.onload = () => { element.style.opacity = '1'; };
-				image.onerror = () => { element.style.opacity = '1'; };
-			}
+		const promises = elements.map(element => {
+			return new Promise(resolve => {
+				const image = new Image();
+				image.src = element.dataset.wallpaperSrc;
+
+				if (image.complete) {
+					resolve();
+					return;
+				}
+
+				allComplete = false;
+
+				image.onload = resolve;
+				image.onerror = resolve;
+			});
 		});
+
+		return {
+			promise: Promise.all(promises),
+			allComplete
+		};
 	}
 
 	#showMiddleman() {
@@ -40,16 +61,39 @@ class PageTransition {
 			this.#typewriterTimer = null;
 		}
 
-		const generation = ++this.#generation;
+		const generation = this.#generation;
 		this.#lineIndex = 0;
 
-		const pageContent = document.querySelector('.page-content');
-		if (!pageContent) return;
+		const container = document.getElementById('transition');
+		if (!container) {
+			return;
+		}
 
-		pageContent.innerHTML = '<div class="middleman"><span class="middleman-text"></span><span class="middleman-cursor">_</span></div>';
-		this.#textElement = pageContent.querySelector('.middleman-text');
+		container.classList.remove('hidden');
+		container.innerHTML = `
+			<div class="middleman">
+				<span class="middleman-text"></span>
+				<span class="middleman-cursor">_</span>
+			</div>
+		`;
+
+		this.#textElement = container.querySelector('.middleman-text');
 
 		this.#runTypewriter(0, generation);
+	}
+
+	async #handleInitialLoad() {
+		const generation = ++this.#generation;
+
+		this.#showMiddleman();
+
+		const { promise, allComplete } = this.#loadWallpapers();
+		const delay = allComplete ? this.#minimumDelay(50) : this.#minimumDelay(500);
+		await Promise.all([promise, delay]);
+
+		if (generation !== this.#generation) return;
+
+		this.#abortAnimation();
 	}
 
 	#abortAnimation() {
@@ -57,7 +101,14 @@ class PageTransition {
 
 		if (this.#typewriterTimer) {
 			clearTimeout(this.#typewriterTimer);
+
 			this.#typewriterTimer = null;
+		}
+
+		const container = document.getElementById('transition');
+		if (container) {
+			container.classList.add('hidden');
+			container.innerHTML = '';
 		}
 	}
 
@@ -111,12 +162,48 @@ class PageTransition {
 				return;
 			}
 
-			this.#showMiddleman();
+			this.#generation++;
+			this.#requestInFlight = true;
+
+			const generation = this.#generation;
+
+			this.#pendingLoaderTimer = setTimeout(() => {
+				if (generation !== this.#generation) {
+					return;
+				}
+
+				if (!this.#requestInFlight) {
+					return;
+				}
+
+				this.#showMiddleman();
+			}, 70);
 		});
 
-		document.addEventListener('htmx:afterSettle', () => {
+		document.addEventListener('htmx:afterSettle', async () => {
+			this.#requestInFlight = false;
+
+			if (this.#pendingLoaderTimer) {
+				clearTimeout(this.#pendingLoaderTimer);
+				this.#pendingLoaderTimer = null;
+			}
+
+			const generation = this.#generation;
+
+			const { promise, allComplete } = this.#loadWallpapers();
+
+			const delay = allComplete ? 0 : 500;
+
+			await Promise.all([promise, this.#minimumDelay(delay)]);
+			if (generation !== this.#generation) {
+				return;
+			}
+
 			this.#abortAnimation();
-			this.#loadWallpapers();
+		});
+
+		document.addEventListener('DOMContentLoaded', () => {
+			this.#handleInitialLoad();
 		});
 
 		document.addEventListener('htmx:responseError', () => this.#abortAnimation());
