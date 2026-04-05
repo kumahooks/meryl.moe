@@ -1,3 +1,32 @@
+.home-user {
+	position: fixed;
+	top: 1rem;
+	right: 1rem;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	font-family: monospace;
+	font-size: 14px;
+}
+
+.home-username {
+	color: #b0a482;
+}
+
+.home-logout {
+	all: unset;
+	color: #a65e6e;
+	cursor: pointer;
+}
+
+.home-logout:hover {
+	text-decoration: underline;
+}
+
+.home-slash {
+	color: #b0a482;
+}
+
 .wallpaper-a {
 	background-image: url('/static/assets/wallpaper/16_a.jpg');
 }

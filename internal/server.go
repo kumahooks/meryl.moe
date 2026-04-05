@@ -30,7 +30,7 @@ import (
 	"meryl.moe/internal/modules/notfound"
 	"meryl.moe/internal/modules/relay"
 	"meryl.moe/internal/modules/whoami"
-	"meryl.moe/internal/platform/db"
+	"meryl.moe/internal/modules/wired"
 	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
 )
@@ -44,17 +44,18 @@ type Server struct {
 }
 
 // NewServer creates a Server with global middleware applied.
-func NewServer(configuration *config.Config) *Server {
+func NewServer(configuration *config.Config, database *sql.DB) *Server {
 	router := chi.NewRouter()
 
 	router.Use(chiMiddleware.Logger)
 	router.Use(chiMiddleware.Recoverer)
-
 	router.Use(middleware.Security)
+	router.Use(middleware.LoadAuth(database))
 
 	return &Server{
-		router: router,
-		config: configuration,
+		router:   router,
+		config:   configuration,
+		database: database,
 	}
 }
 
@@ -94,17 +95,6 @@ func (server *Server) Initialize() error {
 	server.logFile = logFile
 	log.Printf("logging: initialized")
 
-	if err = os.MkdirAll(filepath.Dir(server.config.DB.Path), 0o755); err != nil {
-		return fmt.Errorf("create database directory: %w", err)
-	}
-
-	database, err := db.Open(server.config.DB.Path)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-
-	server.database = database
-
 	var fileSystem fs.FS
 	if server.config.App.Dev {
 		fileSystem = os.DirFS(filepath.Join(server.config.App.RootDir, "internal"))
@@ -119,24 +109,43 @@ func (server *Server) Initialize() error {
 
 	log.Printf("templates: initialized (dev=%v)", server.config.App.Dev)
 
+	// Home/Entry
 	homeHandler := home.NewHandler(templateManager)
-	whoamiHandler := whoami.NewHandler(templateManager)
+
+	// Articles page
 	logsHandler := logs.NewHandler(templateManager)
+
+	// Random posts page
 	noiseHandler := noise.NewHandler(templateManager)
+
+	// List of apps
 	binHandler := bin.NewHandler(templateManager)
+
+	// About page
+	whoamiHandler := whoami.NewHandler(templateManager)
+
+	// Radio module
 	cyberiaHandler := cyberia.NewHandler(templateManager)
+
+	// Text Sharing app module
 	relayHandler := relay.NewHandler(templateManager)
+
+	// 404 Page
 	notFoundHandler := notfound.NewHandler(templateManager)
+
+	// Auth/Login/Logout
+	wiredHandler := wired.NewHandler(templateManager, server.database, server.config.Session.TTL, server.config.App.Dev)
 
 	server.RegisterRoutes(
 		home.Routes(homeHandler),
-		whoami.Routes(whoamiHandler),
 		logs.Routes(logsHandler),
 		noise.Routes(noiseHandler),
 		bin.Routes(binHandler),
+		whoami.Routes(whoamiHandler),
 		cyberia.Routes(cyberiaHandler),
 		relay.Routes(relayHandler),
 		notfound.Routes(notFoundHandler),
+		wired.Routes(wiredHandler),
 	)
 
 	log.Printf("routes: registered")

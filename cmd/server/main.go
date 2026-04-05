@@ -5,9 +5,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"meryl.moe/internal"
 	"meryl.moe/internal/config"
+	"meryl.moe/internal/platform/db"
 )
 
 func main() {
@@ -16,7 +19,18 @@ func main() {
 		log.Fatal("Failed to load config:", err)
 	}
 
-	server := internal.NewServer(configuration)
+	if err := os.MkdirAll(filepath.Dir(configuration.DB.Path), 0o755); err != nil {
+		log.Fatalf("create database directory: %v", err)
+	}
+
+	database, err := db.Open(configuration.DB.Path)
+	if err != nil {
+		log.Fatalf("open database: %v", err)
+	}
+
+	defer database.Close()
+
+	server := internal.NewServer(configuration, database)
 
 	if err := server.Initialize(); err != nil {
 		log.Fatal("Failed to initialize server:", err)
