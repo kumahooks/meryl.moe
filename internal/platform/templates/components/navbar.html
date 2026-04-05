@@ -1,6 +1,4 @@
 {{define "navbar"}}
-<link rel="stylesheet" href="/static/platform/components/navbar.css">
-
 <header class="navbar" hx-target="#content" hx-push-url="true">
 	<span class="navbar-item">
 		<span class="navbar-arrow{{if eq .Page "logs"}} navbar-arrow--active{{end}}">❯</span><a href="/logs" hx-get="/logs">logs<span class="navbar-slash">/</span></a>
