@@ -17,6 +17,43 @@ body {
 	background-attachment: fixed;
 }
 
-[data-wallpaper-src] {
+#page-overlay {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	background: #000;
+	align-items: center;
+	justify-content: center;
+	font-family: monospace;
+	font-size: 13px;
+	color: #804654;
+}
+
+#page-overlay.is-loading {
+	display: flex;
+	opacity: 1;
+	transition: opacity 0.35s ease;
+}
+
+#page-overlay.is-hiding {
 	opacity: 0;
+	pointer-events: none;
+}
+
+.page-overlay-cursor {
+	color: #b90074;
+	animation: overlay-cursor-blink 0.8s step-end infinite;
+}
+
+@keyframes overlay-cursor-blink {
+
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0;
+	}
 }
