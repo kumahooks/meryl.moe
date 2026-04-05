@@ -15,6 +15,14 @@ func (server *Server) RegisterRoutes(registrars ...router.RouteRegistrar) {
 	fileServer := http.FileServer(fileOnlyFS{fileSystem: http.Dir(staticDir)})
 	server.router.Handle("/static/*", http.StripPrefix("/static/", fileServer))
 
+	server.router.Get("/robots.txt", func(writer http.ResponseWriter, request *http.Request) {
+		http.ServeFile(writer, request, filepath.Join(staticDir, "robots.txt"))
+	})
+
+	server.router.Get("/.well-known/security.txt", func(writer http.ResponseWriter, request *http.Request) {
+		http.ServeFile(writer, request, filepath.Join(staticDir, ".well-known", "security.txt"))
+	})
+
 	for _, register := range registrars {
 		register(server.router)
 	}
