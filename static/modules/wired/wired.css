@@ -71,3 +71,20 @@
 	outline: 1px solid #804654;
 	outline-offset: 2px;
 }
+
+.wired-me-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+}
+
+.wired-me-text {
+	font-family: monospace;
+	font-size: 14px;
+	color: #b0a482;
+}
+
+.wired-me-username {
+	color: #ff8fa3;
+}

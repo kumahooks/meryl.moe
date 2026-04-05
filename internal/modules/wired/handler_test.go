@@ -14,6 +14,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"meryl.moe/internal/modules/wired"
+	"meryl.moe/internal/platform/auth"
 	"meryl.moe/internal/platform/db"
 )
 
@@ -110,8 +111,8 @@ func TestAuthenticate_ValidCredentials_RedirectsAndSetsCookie(t *testing.T) {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusSeeOther)
 	}
 
-	if location := recorder.Header().Get("Location"); location != "/" {
-		t.Errorf("redirect location: got %q, want %q", location, "/")
+	if location := recorder.Header().Get("Location"); location != "/wired/me" {
+		t.Errorf("redirect location: got %q, want %q", location, "/wired/me")
 	}
 
 	var sessionCookie *http.Cookie
@@ -289,6 +290,58 @@ func TestLogout_DeletesSessionAndClearsCookie(t *testing.T) {
 
 	if clearedCookie.MaxAge != -1 {
 		t.Errorf("cookie MaxAge: got %d, want -1", clearedCookie.MaxAge)
+	}
+}
+
+func TestMe_AuthenticatedUser_RendersWithUsername(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database, "lain", "owo")
+
+	rawToken := strings.Repeat("letsalllovelain", 6)
+	storedHash := hashToken(rawToken)
+
+	now := time.Now().Unix()
+	if _, err := database.Exec(
+		"INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+		storedHash, userID, now, now+3600,
+	); err != nil {
+		t.Fatalf("insert session: %v", err)
+	}
+
+	renderer := &mockRenderer{}
+	handler := newTestHandler(database, renderer)
+
+	request := httptest.NewRequest(http.MethodGet, "/wired/me", nil)
+	request.AddCookie(&http.Cookie{Name: "session", Value: rawToken})
+
+	// Simulate LoadAuth having run by injecting the user into context directly.
+	ctx := auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"})
+	request = request.WithContext(ctx)
+
+	recorder := httptest.NewRecorder()
+	handler.Me(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+
+	dataMap, ok := renderer.lastData.(map[string]any)
+	if !ok {
+		t.Fatal("render data is not map[string]any")
+	}
+
+	user, hasUser := dataMap["User"]
+	if !hasUser {
+		t.Fatal("expected \"User\" key in render data")
+	}
+
+	authUser, ok := user.(auth.User)
+	if !ok {
+		t.Fatal("User is not auth.User")
+	}
+
+	if authUser.Username != "lain" {
+		t.Errorf("username: got %q, want %q", authUser.Username, "lain")
 	}
 }
 
