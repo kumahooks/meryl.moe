@@ -217,6 +217,7 @@ func (handler *Handler) renderLogin(writer http.ResponseWriter, request *http.Re
 // Returns the raw token (sent to the client in the cookie) and its SHA-256
 // hash (stored in the database).
 func generateSessionToken() (raw string, tokenHash string, err error) {
+	// TODO: should we care about collisions.............
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return "", "", fmt.Errorf("read random bytes: %w", err)

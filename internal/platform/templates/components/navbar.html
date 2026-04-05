@@ -1,25 +1,25 @@
 {{define "navbar"}}
 <link rel="stylesheet" href="/static/platform/components/navbar.css">
 
-<header class="navbar">
+<header class="navbar" hx-target="#content" hx-push-url="true">
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "logs"}} navbar-arrow--active{{end}}">❯</span><a href="/logs">logs<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "logs"}} navbar-arrow--active{{end}}">❯</span><a href="/logs" hx-get="/logs">logs<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "noise"}} navbar-arrow--active{{end}}">❯</span><a href="/noise">noise<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "noise"}} navbar-arrow--active{{end}}">❯</span><a href="/noise" hx-get="/noise">noise<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "bin"}} navbar-arrow--active{{end}}">❯</span><a href="/bin">bin<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "bin"}} navbar-arrow--active{{end}}">❯</span><a href="/bin" hx-get="/bin">bin<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "cyberia"}} navbar-arrow--active{{end}}">❯</span><a href="/cyberia">cyberia<span class="navbar-slash">/</span></a>
+		<span class="navbar-arrow{{if eq .Page "cyberia"}} navbar-arrow--active{{end}}">❯</span><a href="/cyberia" hx-get="/cyberia">cyberia<span class="navbar-slash">/</span></a>
 	</span>
 
 	<span class="navbar-item">
-		<span class="navbar-arrow{{if eq .Page "whoami"}} navbar-arrow--active{{end}}">❯</span><a href="/whoami">whoami<span class="navbar-slash">*</span></a>
+		<span class="navbar-arrow{{if eq .Page "whoami"}} navbar-arrow--active{{end}}">❯</span><a href="/whoami" hx-get="/whoami">whoami<span class="navbar-slash">*</span></a>
 	</span>
 
 	{{if .User}}
