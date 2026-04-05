@@ -1,12 +1,4 @@
 {{define "navbar"}}
-{{- /*
-  The <link> below is intentionally inside the component rather than in <head>.
-  Trade-off: technically invalid HTML (link outside head), but required for HTMX
-  fragment swaps - when HTMX replaces #content, this tag travels with the fragment
-  and the browser applies the stylesheet. Moving it to base.html <head> would fix
-  validity but break CSS injection on fragment navigation for pages that include
-  this component.
-*/ -}}
 <link rel="stylesheet" href="/static/platform/components/navbar.css">
 
 <header class="navbar">
@@ -29,6 +21,16 @@
 	<span class="navbar-item">
 		<span class="navbar-arrow{{if eq .Page "whoami"}} navbar-arrow--active{{end}}">❯</span><a href="/whoami">whoami<span class="navbar-slash">*</span></a>
 	</span>
+
+	{{if .User}}
+	<span class="navbar-item navbar-item--user">
+		<span class="navbar-username">{{.User.Username}}</span>
+
+		<form method="POST" action="/wired/logout" hx-boost="false">
+			<button type="submit" class="navbar-logout">logout<span class="navbar-slash">*</span></button>
+		</form>
+	</span>
+	{{end}}
 </header>
 {{end}}
 

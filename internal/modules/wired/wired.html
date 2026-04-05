@@ -1,0 +1,23 @@
+{{define "page-content"}}
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/static/modules/wired/wired.css">
+
+<div class="wired-container">
+	<div class="wired-card">
+		<p class="wired-title">wired<span class="wired-title-slash">/</span></p>
+
+		<form class="wired-form" method="POST" action="/wired" hx-boost="false">
+			<input class="wired-input" type="text" name="username" placeholder="username" autocomplete="username" autofocus>
+			<input class="wired-input" type="password" name="password" placeholder="password" autocomplete="current-password">
+
+			{{if .Error}}
+			<p class="wired-error">{{.Error}}</p>
+			{{end}}
+
+			<button class="wired-submit" type="submit">enter</button>
+		</form>
+
+	</div>
+</div>
+{{end}}
+
