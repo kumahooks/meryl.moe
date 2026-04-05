@@ -2,6 +2,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -23,6 +25,10 @@ type Config struct {
 
 	DB struct {
 		Path string `envconfig:"DB_PATH" default:"./data/meryl.db"`
+	}
+
+	Session struct {
+		TTL time.Duration `envconfig:"SESSION_TTL" default:"168h"`
 	}
 }
 

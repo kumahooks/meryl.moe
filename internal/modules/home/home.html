@@ -6,6 +6,16 @@
 <title>{{.Title}}</title>
 <link rel="stylesheet" href="/static/modules/home/home.css">
 
+{{if .User}}
+<div class="home-user">
+	<span class="home-username">{{.User.Username}}</span>
+
+	<form method="POST" action="/wired/logout" hx-boost="false">
+		<button type="submit" class="home-logout">logout<span class="home-slash">*</span></button>
+	</form>
+</div>
+{{end}}
+
 <div class="wallpaper wallpaper-a" data-wallpaper-src="/static/assets/wallpaper/16_a.jpg"></div>
 <div class="wallpaper wallpaper-b"></div>
 

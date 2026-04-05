@@ -38,3 +38,21 @@
 	color: #b0a482;
 }
 
+.navbar-item--user {
+	margin-left: auto;
+	gap: 0.6rem;
+}
+
+.navbar-username {
+	color: #b0a482;
+}
+
+.navbar-logout {
+	all: unset;
+	color: #a65e6e;
+	cursor: pointer;
+}
+
+.navbar-logout:hover {
+	text-decoration: underline;
+}

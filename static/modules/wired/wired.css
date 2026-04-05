@@ -1,0 +1,73 @@
+.wired-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+}
+
+.wired-card {
+	border: 1px solid #2a2a2a;
+	padding: 2rem;
+	width: 280px;
+	background: #0d0d0d;
+}
+
+.wired-title {
+	font-family: monospace;
+	font-size: 14px;
+	color: #804654;
+	margin-bottom: 1.5rem;
+}
+
+.wired-title-slash {
+	color: #b0a482;
+}
+
+.wired-error {
+	font-family: monospace;
+	font-size: 12px;
+	color: #804654;
+	margin-bottom: 1rem;
+}
+
+.wired-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.wired-input {
+	background: #000;
+	border: 1px solid #2a2a2a;
+	color: #b0a482;
+	font-family: monospace;
+	font-size: 13px;
+	padding: 0.4rem 0.6rem;
+	outline: none;
+	width: 100%;
+}
+
+.wired-input:focus {
+	border-color: #804654;
+}
+
+.wired-submit {
+	background: none;
+	border: 1px solid #2a2a2a;
+	color: #b0a482;
+	font-family: monospace;
+	font-size: 13px;
+	padding: 0.4rem;
+	cursor: pointer;
+	margin-top: 0.25rem;
+}
+
+.wired-submit:hover {
+	border-color: #804654;
+	color: #804654;
+}
+
+.wired-submit:focus {
+	outline: 1px solid #804654;
+	outline-offset: 2px;
+}
