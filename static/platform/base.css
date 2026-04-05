@@ -15,57 +15,6 @@ body {
 	min-height: 100vh;
 }
 
-.wallpaper {
-	position: fixed;
-	inset: 0;
-	z-index: -1;
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
-}
-
-#transition {
-	position: fixed;
-	inset: 0;
-	z-index: 100;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: black;
-}
-
-#transition.hidden {
-	display: none;
-}
-
-.middleman {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-family: monospace;
-	font-size: 13px;
-	color: #804654;
-	height: 100%;
-}
-
-.middleman-cursor {
-	color: #b90074;
-	animation: middleman-cursor-blink 0.8s step-end infinite;
-}
-
-@keyframes middleman-cursor-blink {
-
-	0%,
-	100% {
-		opacity: 1;
-	}
-
-	50% {
-		opacity: 0;
-	}
-}
-
 /* --- navbar --- */
 .navbar {
 	font-family: monospace;
@@ -241,22 +190,6 @@ body {
 
 .home-slash {
 	color: #b0a482;
-}
-
-.wallpaper-a {
-	background-image: url('/static/assets/wallpaper/16_a.jpg');
-}
-
-.wallpaper-b {
-	background-image: url('/static/assets/wallpaper/16_b.jpg');
-	opacity: 0;
-	animation: wallpaper-reveal 0s 2s forwards;
-}
-
-@keyframes wallpaper-reveal {
-	to {
-		opacity: 1;
-	}
 }
 
 /* --- bin --- */

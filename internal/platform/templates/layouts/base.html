@@ -13,15 +13,12 @@
 	{{block "page-head" .}}{{end}}
 
 	<script src="/static/js/vendor/htmx.min.js"></script>
-	<script type="module" src="/static/platform/pageTransition.js"></script>
 </head>
 
 <body hx-boost="true">
 	<main id="content">
 		{{template "page-content" .}}
 	</main>
-
-	<div id="transition" class="transition hidden"></div>
 </body>
 </html>
 {{end}}
