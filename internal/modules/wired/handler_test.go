@@ -1,9 +1,7 @@
 package wired_test
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -69,19 +67,20 @@ func insertTestUser(t *testing.T, database *sql.DB, username string, password st
 	return testUserID
 }
 
-func hashToken(raw string) string {
-	hash := sha256.Sum256([]byte(raw))
+func newTestHandler(t *testing.T, database *sql.DB, renderer *mockRenderer) *wired.Handler {
+	t.Helper()
 
-	return hex.EncodeToString(hash[:])
-}
+	service, err := auth.NewService(database, 168*time.Hour)
+	if err != nil {
+		t.Fatalf("new auth service: %v", err)
+	}
 
-func newTestHandler(database *sql.DB, renderer *mockRenderer) *wired.Handler {
-	return wired.NewHandler(renderer, database, 168*time.Hour, false)
+	return wired.NewHandler(renderer, service, false)
 }
 
 func TestLogin_GET_RendersForm(t *testing.T) {
 	renderer := &mockRenderer{}
-	handler := newTestHandler(openTestDB(t), renderer)
+	handler := newTestHandler(t, openTestDB(t), renderer)
 
 	recorder := httptest.NewRecorder()
 	handler.Login(recorder, httptest.NewRequest(http.MethodGet, "/wired", nil))
@@ -98,7 +97,7 @@ func TestAuthenticate_ValidCredentials_RedirectsAndSetsCookie(t *testing.T) {
 	form := url.Values{"username": {"lain"}, "password": {"lets all love lain"}}
 
 	renderer := &mockRenderer{}
-	handler := newTestHandler(database, renderer)
+	handler := newTestHandler(t, database, renderer)
 
 	request := httptest.NewRequest(http.MethodPost, "/wired", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -143,7 +142,7 @@ func TestAuthenticate_WrongPassword_Returns403WithError(t *testing.T) {
 	form := url.Values{"username": {"lain"}, "password": {"uwu"}}
 
 	renderer := &mockRenderer{}
-	handler := newTestHandler(database, renderer)
+	handler := newTestHandler(t, database, renderer)
 
 	request := httptest.NewRequest(http.MethodPost, "/wired", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -175,7 +174,7 @@ func TestAuthenticate_UnknownUser_Returns403WithError(t *testing.T) {
 	form := url.Values{"username": {"baudrillard"}, "password": {"rosetta stoned"}}
 
 	renderer := &mockRenderer{}
-	handler := newTestHandler(openTestDB(t), renderer)
+	handler := newTestHandler(t, openTestDB(t), renderer)
 
 	request := httptest.NewRequest(http.MethodPost, "/wired", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -207,7 +206,7 @@ func TestAuthenticate_EmptyFields_Returns403WithError(t *testing.T) {
 	form := url.Values{"username": {""}, "password": {""}}
 
 	renderer := &mockRenderer{}
-	handler := newTestHandler(openTestDB(t), renderer)
+	handler := newTestHandler(t, openTestDB(t), renderer)
 
 	request := httptest.NewRequest(http.MethodPost, "/wired", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -241,7 +240,7 @@ func TestLogout_DeletesSessionAndClearsCookie(t *testing.T) {
 
 	// Insert a session with a known raw token so we can verify deletion.
 	rawToken := strings.Repeat("letsalllovelain", 6)
-	storedHash := hashToken(rawToken)
+	storedHash := auth.HashToken(rawToken)
 
 	now := time.Now().Unix()
 	if _, err := database.Exec(
@@ -252,7 +251,7 @@ func TestLogout_DeletesSessionAndClearsCookie(t *testing.T) {
 	}
 
 	renderer := &mockRenderer{}
-	handler := newTestHandler(database, renderer)
+	handler := newTestHandler(t, database, renderer)
 
 	request := httptest.NewRequest(http.MethodPost, "/wired/logout", nil)
 	request.AddCookie(&http.Cookie{Name: "session", Value: rawToken})
@@ -298,7 +297,7 @@ func TestMe_AuthenticatedUser_RendersWithUsername(t *testing.T) {
 	userID := insertTestUser(t, database, "lain", "owo")
 
 	rawToken := strings.Repeat("letsalllovelain", 6)
-	storedHash := hashToken(rawToken)
+	storedHash := auth.HashToken(rawToken)
 
 	now := time.Now().Unix()
 	if _, err := database.Exec(
@@ -309,7 +308,7 @@ func TestMe_AuthenticatedUser_RendersWithUsername(t *testing.T) {
 	}
 
 	renderer := &mockRenderer{}
-	handler := newTestHandler(database, renderer)
+	handler := newTestHandler(t, database, renderer)
 
 	request := httptest.NewRequest(http.MethodGet, "/wired/me", nil)
 	request.AddCookie(&http.Cookie{Name: "session", Value: rawToken})
@@ -349,7 +348,7 @@ func TestAuthenticate_RendererError_Returns403(t *testing.T) {
 	form := url.Values{"username": {""}, "password": {""}}
 
 	renderer := &mockRenderer{err: errors.New("template failure")}
-	handler := newTestHandler(openTestDB(t), renderer)
+	handler := newTestHandler(t, openTestDB(t), renderer)
 
 	request := httptest.NewRequest(http.MethodPost, "/wired", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")

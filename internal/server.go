@@ -31,6 +31,7 @@ import (
 	"meryl.moe/internal/modules/relay"
 	"meryl.moe/internal/modules/whoami"
 	"meryl.moe/internal/modules/wired"
+	"meryl.moe/internal/platform/auth"
 	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
 )
@@ -134,7 +135,12 @@ func (server *Server) Initialize() error {
 	notFoundHandler := notfound.NewHandler(templateManager)
 
 	// Auth/Login/Logout
-	wiredHandler := wired.NewHandler(templateManager, server.database, server.config.Session.TTL, server.config.App.Dev)
+	authService, err := auth.NewService(server.database, server.config.Session.TTL)
+	if err != nil {
+		return fmt.Errorf("auth service: %w", err)
+	}
+
+	wiredHandler := wired.NewHandler(templateManager, authService, server.config.App.Dev)
 
 	server.RegisterRoutes(
 		home.Routes(homeHandler),
@@ -145,7 +151,7 @@ func (server *Server) Initialize() error {
 		cyberia.Routes(cyberiaHandler),
 		relay.Routes(relayHandler),
 		notfound.Routes(notFoundHandler),
-		wired.Routes(wiredHandler),
+		wired.Routes(wiredHandler, server.database),
 	)
 
 	log.Printf("routes: registered")

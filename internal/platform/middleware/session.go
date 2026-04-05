@@ -1,9 +1,7 @@
 package middleware
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"net/http"
 	"time"
 
@@ -22,7 +20,7 @@ func LoadAuth(database *sql.DB) func(http.Handler) http.Handler {
 				return
 			}
 
-			tokenHash := hashSessionToken(cookie.Value)
+			tokenHash := auth.HashToken(cookie.Value)
 
 			// TODO: I should at some point think about cache here,
 			// otherwise every auth request will do this and it's kinda... eh
@@ -66,10 +64,4 @@ func RequireAuth(database *sql.DB) func(http.Handler) http.Handler {
 			next.ServeHTTP(writer, request)
 		}))
 	}
-}
-
-// hashSessionToken returns the hex-encoded SHA-256 hash of the raw token.
-func hashSessionToken(raw string) string {
-	hash := sha256.Sum256([]byte(raw))
-	return hex.EncodeToString(hash[:])
 }
