@@ -1,12 +1,11 @@
 {{define "page-content"}}
 <title>{{.Title}}</title>
-<link rel="stylesheet" href="/static/modules/noise/noise.css">
-
-<div class="wallpaper" data-wallpaper-src="/static/assets/wallpaper/13.jpg"></div>
 
 {{template "navbar" .}}
 
 <div class="page-content">
+	<div class="wallpaper" style="background-image: url('/static/assets/wallpaper/13.jpg')" data-wallpaper-src="/static/assets/wallpaper/13.jpg"></div>
+
 	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
 </div>
 {{end}}

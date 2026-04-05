@@ -10,15 +10,13 @@
 
 	<link rel="stylesheet" href="/static/platform/base.css">
 
-	<script src="/static/js/vendor/htmx.min.js"></script>
-	<script type="module" src="/static/platform/wallpaper.js"></script>
-
 	{{block "page-head" .}}{{end}}
+
+	<script src="/static/js/vendor/htmx.min.js"></script>
+	<script type="module" src="/static/platform/pageTransition.js"></script>
 </head>
 
 <body hx-boost="true">
-	<div id="page-overlay"><span id="page-overlay-text"></span><span class="page-overlay-cursor">_</span></div>
-
 	<main id="content">
 		{{template "page-content" .}}
 	</main>

@@ -1,10 +1,9 @@
 {{define "page-content"}}
 <title>{{.Title}}</title>
-<link rel="stylesheet" href="/static/modules/bin/bin.css">
 
 {{template "navbar" .}}
 
-<div class="bin-container">
+<div class="page-content">
 	<ul class="bin-list">
 		<li class="bin-entry">
 			<a href="/relay" class="bin-name">relay<span class="bin-marker">*</span></a>
@@ -13,3 +12,4 @@
 	</ul>
 </div>
 {{end}}
+

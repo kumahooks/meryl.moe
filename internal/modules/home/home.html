@@ -1,10 +1,5 @@
-{{define "page-head"}}
-<link rel="stylesheet" href="/static/modules/home/home.css">
-{{end}}
-
 {{define "page-content"}}
 <title>{{.Title}}</title>
-<link rel="stylesheet" href="/static/modules/home/home.css">
 
 {{if .User}}
 <div class="home-user">
@@ -16,10 +11,10 @@
 </div>
 {{end}}
 
-<div class="wallpaper wallpaper-a" data-wallpaper-src="/static/assets/wallpaper/16_a.jpg"></div>
-<div class="wallpaper wallpaper-b"></div>
+<div class="page-content page-content--home">
+	<div class="wallpaper wallpaper-a" data-wallpaper-src="/static/assets/wallpaper/16_a.jpg"></div>
+	<div class="wallpaper wallpaper-b"></div>
 
-<div class="home-container">
 	<div class="terminal-card">
 		<div class="line">
 			<span class="terminal-user">kuma</span><span class="terminal-host">@kuma</span> <span class="terminal-path">~/nav</span>

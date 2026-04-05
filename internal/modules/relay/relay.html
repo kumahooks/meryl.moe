@@ -1,27 +1,28 @@
 {{define "page-content"}}
 <title>{{.Title}}</title>
-<link rel="stylesheet" href="/static/modules/relay/relay.css">
 
 {{template "navbar" .}}
 
-<div class="relay-container">
-	<div class="relay-editor">
-		<div class="relay-gutter" id="relay-gutter"></div>
-		<textarea id="relay-input" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"></textarea>
-	</div>
+<div class="page-content page-content--relay">
+	<div class="relay-container">
+		<div class="relay-editor">
+			<div class="relay-gutter" id="relay-gutter"></div>
+			<textarea id="relay-input" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"></textarea>
+		</div>
 
-	<div class="relay-modeline">
-		<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
-	</div>
+		<div class="relay-modeline">
+			<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
+		</div>
 
-	<div class="relay-dialog-overlay">
-		<div class="relay-dialog">
-			<p class="relay-dialog-message">load <span class="relay-dialog-filename"></span>?</p>
-			<p class="relay-dialog-sub">this will overwrite the current text.</p>
+		<div class="relay-dialog-overlay">
+			<div class="relay-dialog">
+				<p class="relay-dialog-message">load <span class="relay-dialog-filename"></span>?</p>
+				<p class="relay-dialog-sub">this will overwrite the current text.</p>
 
-			<div class="relay-dialog-actions">
-				<button class="relay-dialog-btn relay-dialog-btn--confirm">load</button>
-				<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
+				<div class="relay-dialog-actions">
+					<button class="relay-dialog-btn relay-dialog-btn--confirm">load</button>
+					<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
+				</div>
 			</div>
 		</div>
 	</div>
