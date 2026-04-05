@@ -27,6 +27,8 @@ func Routes(handler *Handler) func(chi.Router) {
 }
 
 // Index renders the bin page.
+// TODO: there's a case in production where the content loads before the style
+// which renders the page in a very ugly manner
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
 	pageFile := "modules/bin/bin.html"
 	data := map[string]any{"Page": "bin", "Title": "bin - meryl.moe"}

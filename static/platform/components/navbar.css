@@ -7,6 +7,8 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0 0.8rem;
+	position: relative;
+	z-index: 101;
 }
 
 .navbar-item {
