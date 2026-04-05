@@ -8,7 +8,10 @@
 
 <div class="wired-container">
 	<div class="wired-card">
-		<p class="wired-title">wired<span class="wired-title-slash">/</span></p>
+		<div class="wired-header">
+			<p class="wired-title">wired<span class="wired-title-slash">/</span></p>
+			<a class="wired-back" href="/">$ cd ..</a>
+		</div>
 
 		<form class="wired-form" method="POST" action="/wired" hx-boost="false">
 			<input class="wired-input" type="text" name="username" placeholder="username" autocomplete="username" autofocus>
@@ -20,7 +23,6 @@
 
 			<button class="wired-submit" type="submit">enter</button>
 		</form>
-
 	</div>
 </div>
 {{end}}

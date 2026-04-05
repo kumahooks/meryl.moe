@@ -12,11 +12,17 @@
 	background: #0d0d0d;
 }
 
+.wired-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	margin-bottom: 1.5rem;
+}
+
 .wired-title {
 	font-family: monospace;
 	font-size: 14px;
 	color: #804654;
-	margin-bottom: 1.5rem;
 }
 
 .wired-title-slash {
@@ -70,6 +76,17 @@
 .wired-submit:focus {
 	outline: 1px solid #804654;
 	outline-offset: 2px;
+}
+
+.wired-back {
+	font-family: monospace;
+	font-size: 12px;
+	color: #804654;
+	text-decoration: none;
+}
+
+.wired-back:hover {
+	color: #b0a482;
 }
 
 .wired-me-container {
