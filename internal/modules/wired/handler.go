@@ -14,6 +14,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
+	"meryl.moe/internal/platform/auth"
+	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
 )
 
@@ -54,6 +56,7 @@ func Routes(handler *Handler) func(chi.Router) {
 		router.Get("/wired", handler.Login)
 		router.Post("/wired", handler.Authenticate)
 		router.Post("/wired/logout", handler.Logout)
+		router.With(middleware.RequireAuth(handler.database)).Get("/wired/me", handler.Me)
 	}
 }
 
@@ -153,7 +156,7 @@ func (handler *Handler) Authenticate(writer http.ResponseWriter, request *http.R
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	http.Redirect(writer, request, "/", http.StatusSeeOther)
+	http.Redirect(writer, request, "/wired/me", http.StatusSeeOther)
 }
 
 // Logout deletes the session from the database, clears the cookie, and redirects to /.
@@ -181,6 +184,19 @@ func (handler *Handler) Logout(writer http.ResponseWriter, request *http.Request
 	})
 
 	http.Redirect(writer, request, "/", http.StatusSeeOther)
+}
+
+// Me renders the authenticated user status page.
+func (handler *Handler) Me(writer http.ResponseWriter, request *http.Request) {
+	user, _ := auth.AuthUser(request.Context())
+
+	pageFile := "modules/wired/me.html"
+	data := map[string]any{"Title": "wired/me", "User": user}
+
+	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
+		log.Printf("wired: render me: %v", err)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (handler *Handler) renderLogin(writer http.ResponseWriter, request *http.Request, errorMessage string) {

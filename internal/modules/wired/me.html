@@ -1,0 +1,10 @@
+{{define "page-content"}}
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/static/modules/wired/wired.css">
+
+{{template "navbar" .}}
+
+<div class="wired-me-container">
+	<p class="wired-me-text">are you connected, <span class="wired-me-username">{{.User.Username}}</span>?</p>
+</div>
+{{end}}
