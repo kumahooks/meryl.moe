@@ -106,10 +106,6 @@ func (handler *Handler) View(writer http.ResponseWriter, request *http.Request) 
 		"ReadOnly": true,
 	}
 
-	if user, ok := auth.AuthUser(request.Context()); ok {
-		data["User"] = user
-	}
-
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
