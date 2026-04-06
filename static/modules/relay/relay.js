@@ -114,6 +114,9 @@ class RelayEditor {
 		this.#textarea.focus();
 	}
 
+	// TODO: this does not actually update the relays list as it receives them
+	// from the content rendering itself
+	// it's technically not a good practice to do this way...
 	#togglePanel() {
 		const isOpen = this.#panel.classList.toggle('relay-panel--open');
 		this.#panelBackdrop?.classList.toggle('relay-panel-backdrop--visible', isOpen);
@@ -188,8 +191,8 @@ class RelayEditor {
 			if (event.key === 'Escape') this.#hideDialog();
 		});
 
-		if (this.#saveDialog) {
-			const saveTriggerBtn = container.querySelector('#relay-save-btn');
+		const saveTriggerBtn = container.querySelector('#relay-save-btn');
+		if (saveTriggerBtn) {
 			const saveConfirmBtn = this.#saveDialog.querySelector('.relay-dialog-btn--confirm');
 			const saveCancelBtn = this.#saveDialog.querySelector('.relay-dialog-btn--cancel');
 
@@ -229,6 +232,11 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('htmx:afterSettle', init);
+
+// TODO: browser back/forward breaks relay in multiple ways:
+// - panel stays open after navigating to a saved relay and going back
+// - clicking outside the panel does not close it
+// - possibly other state (URL, charcount, gutter) is stale on restore
 
 init();
 

@@ -11,16 +11,20 @@
 		</div>
 
 		<div class="relay-modeline">
-			<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
-
 			{{if .User}}
-			<button type="button" id="relay-list-btn" class="relay-list-btn">my relays</button>
+			<div class="relay-actions">
+				<button type="button" id="relay-list-btn" class="relay-list-btn">my relays<span class="relay-list-btn-slash">*</span></button>
 
-			<div class="relay-save-form">
-				<span id="relay-save-result"></span>
-				<button type="button" id="relay-save-btn" class="relay-save-btn">save*</button>
+				{{if not .ReadOnly}}
+				<div class="relay-save-form">
+					<button type="button" id="relay-save-btn" class="relay-save-btn">save<span class="relay-save-btn-slash">*</span></button>
+					<span id="relay-save-result"></span>
+				</div>
+				{{end}}
 			</div>
 			{{end}}
+
+			<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
 		</div>
 
 		<div class="relay-dialog-overlay">
@@ -40,7 +44,7 @@
 
 		<div id="relay-panel" class="relay-panel">
 			<div class="relay-panel-header">
-				<span class="relay-panel-title">relays</span>
+				<span class="relay-panel-title">my relays</span>
 				<button type="button" id="relay-panel-close" class="relay-panel-close">close</button>
 			</div>
 
