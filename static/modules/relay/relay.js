@@ -4,6 +4,7 @@ class RelayEditor {
 	#pendingCompression = null;
 	#pendingFileContent = null;
 	#dragCounter = 0;
+	#saveDialog = null;
 
 	#textarea;
 	#gutter;
@@ -17,7 +18,9 @@ class RelayEditor {
 		this.#charcount = root.querySelector('#relay-charcount');
 		this.#dialogOverlay = root.querySelector('.relay-dialog-overlay');
 		this.#dialogFilename = root.querySelector('.relay-dialog-filename');
+		this.#saveDialog = root.querySelector('#relay-save-dialog');
 
+		this.#charcount.textContent = this.#textarea.value.length;
 		this.#restoreFromUrl();
 		this.#updateGutter();
 		this.#bindEvents();
@@ -95,6 +98,18 @@ class RelayEditor {
 		this.#textarea.focus();
 	}
 
+	// TODO: I think this should actually be a generic component instead of localized
+	// as I believe other screens will also have a dialog like this
+	#showSaveDialog() {
+		this.#saveDialog.classList.add('relay-dialog-overlay--visible');
+		this.#saveDialog.querySelector('.relay-dialog-btn--confirm').focus();
+	}
+
+	#hideSaveDialog() {
+		this.#saveDialog.classList.remove('relay-dialog-overlay--visible');
+		this.#textarea.focus();
+	}
+
 	#confirmLoad() {
 		this.#textarea.focus();
 		this.#textarea.select();
@@ -150,10 +165,33 @@ class RelayEditor {
 		this.#dialogOverlay.querySelector('.relay-dialog-btn--confirm').addEventListener('click', () => this.#confirmLoad());
 		this.#dialogOverlay.querySelector('.relay-dialog-btn--cancel').addEventListener('click', () => this.#hideDialog());
 
+		this.#dialogOverlay.addEventListener('click', event => {
+			if (event.target === this.#dialogOverlay) this.#hideDialog();
+		});
+
 		this.#dialogOverlay.addEventListener('keydown', event => {
 			if (event.key === 'Enter') this.#confirmLoad();
 			if (event.key === 'Escape') this.#hideDialog();
 		});
+
+		if (this.#saveDialog) {
+			const saveTriggerBtn = container.querySelector('#relay-save-btn');
+			const saveConfirmBtn = this.#saveDialog.querySelector('.relay-dialog-btn--confirm');
+			const saveCancelBtn = this.#saveDialog.querySelector('.relay-dialog-btn--cancel');
+
+			saveTriggerBtn.addEventListener('click', () => this.#showSaveDialog());
+			saveConfirmBtn.addEventListener('click', () => this.#hideSaveDialog());
+			saveCancelBtn.addEventListener('click', () => this.#hideSaveDialog());
+
+			this.#saveDialog.addEventListener('click', event => {
+				if (event.target === this.#saveDialog) this.#hideSaveDialog();
+			});
+
+			this.#saveDialog.addEventListener('keydown', event => {
+				if (event.key === 'Enter') saveConfirmBtn.click();
+				if (event.key === 'Escape') this.#hideSaveDialog();
+			});
+		}
 	}
 }
 
@@ -167,5 +205,6 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('htmx:afterSettle', init);
+
 init();
 

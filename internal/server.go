@@ -129,7 +129,8 @@ func (server *Server) Initialize() error {
 	cyberiaHandler := cyberia.NewHandler(templateManager)
 
 	// Text Sharing app module
-	relayHandler := relay.NewHandler(templateManager)
+	relayService := relay.NewService(server.database)
+	relayHandler := relay.NewHandler(templateManager, relayService)
 
 	// 404 Page
 	notFoundHandler := notfound.NewHandler(templateManager)
@@ -149,7 +150,7 @@ func (server *Server) Initialize() error {
 		bin.Routes(binHandler),
 		whoami.Routes(whoamiHandler),
 		cyberia.Routes(cyberiaHandler),
-		relay.Routes(relayHandler),
+		relay.Routes(relayHandler, server.database),
 		notfound.Routes(notFoundHandler),
 		wired.Routes(wiredHandler, server.database),
 	)

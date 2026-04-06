@@ -49,8 +49,7 @@ func LoadAuth(database *sql.DB) func(http.Handler) http.Handler {
 	}
 }
 
-// RequireAuth wraps LoadAuth and redirects to / if no valid session is
-// present.
+// RequireAuth wraps LoadAuth and redirects to / if no valid session is present.
 func RequireAuth(database *sql.DB) func(http.Handler) http.Handler {
 	load := LoadAuth(database)
 

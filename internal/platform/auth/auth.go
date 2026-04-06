@@ -23,6 +23,7 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 type authContextKey struct{}
 
 // User holds the authenticated user's identity injected into the request context.
+// TODO: make sure this does not leak any weird data
 type User struct {
 	ID       string
 	Username string

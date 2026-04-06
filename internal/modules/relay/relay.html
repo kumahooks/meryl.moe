@@ -7,11 +7,18 @@
 	<div class="relay-container">
 		<div class="relay-editor">
 			<div class="relay-gutter" id="relay-gutter"></div>
-			<textarea id="relay-input" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"></textarea>
+			<textarea id="relay-input" name="text" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"{{if .ReadOnly}} readonly{{end}}>{{.Content}}</textarea>
 		</div>
 
 		<div class="relay-modeline">
 			<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
+
+			{{if .User}}
+			<div class="relay-save-form">
+				<span id="relay-save-result"></span>
+				<button type="button" id="relay-save-btn" class="relay-save-btn">save*</button>
+			</div>
+			{{end}}
 		</div>
 
 		<div class="relay-dialog-overlay">
@@ -25,6 +32,24 @@
 				</div>
 			</div>
 		</div>
+
+		{{if .User}}
+		<div id="relay-save-dialog" class="relay-dialog-overlay">
+			<div class="relay-dialog">
+				<p class="relay-dialog-message">save relay?</p>
+				<p class="relay-dialog-sub">a permanent link will be created.</p>
+
+				<div class="relay-dialog-actions">
+					<button class="relay-dialog-btn relay-dialog-btn--confirm"
+						hx-post="/relay"
+						hx-include="#relay-input"
+						hx-target="#relay-save-result"
+						hx-swap="innerHTML">save</button>
+					<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
+				</div>
+			</div>
+		</div>
+		{{end}}
 	</div>
 </div>
 
