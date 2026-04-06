@@ -29,6 +29,14 @@ type Relay struct {
 	ExpiresAt   time.Time
 }
 
+// RelayListItem is a summary of a relay for list display.
+type RelayListItem struct {
+	ID          string
+	Preview     string
+	PrivateMode string
+	Date        string
+}
+
 // Service handles relay persistence.
 type Service struct {
 	database *sql.DB
@@ -87,6 +95,52 @@ func (service *Service) Get(id string) (*Relay, error) {
 	savedRelay.ExpiresAt = time.Unix(expiresAtUnix, 0)
 
 	return savedRelay, nil
+}
+
+// List returns a summary of all relays belonging to userID, newest first.
+func (service *Service) List(userID string) ([]RelayListItem, error) {
+	rows, err := service.database.Query(
+		"SELECT id, content, private_mode, created_at FROM relays WHERE user_id = ? ORDER BY created_at DESC",
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query relays: %w", err)
+	}
+
+	defer rows.Close()
+
+	var items []RelayListItem
+
+	for rows.Next() {
+		var item RelayListItem
+		var compressed []byte
+		var createdAtUnix int64
+
+		if err := rows.Scan(&item.ID, &compressed, &item.PrivateMode, &createdAtUnix); err != nil {
+			return nil, fmt.Errorf("scan relay: %w", err)
+		}
+
+		item.Date = time.Unix(createdAtUnix, 0).Format("2006-01-02")
+
+		content, err := decompressText(compressed)
+		if err != nil {
+			return nil, err
+		}
+
+		runes := []rune(content)
+		if len(runes) > 15 {
+			runes = append(runes[:15], []rune("...")...)
+		}
+
+		item.Preview = string(runes)
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate relays: %w", err)
+	}
+
+	return items, nil
 }
 
 func compressText(text string) ([]byte, error) {

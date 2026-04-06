@@ -5,6 +5,8 @@ class RelayEditor {
 	#pendingFileContent = null;
 	#dragCounter = 0;
 	#saveDialog = null;
+	#panel = null;
+	#panelBackdrop = null;
 
 	#textarea;
 	#gutter;
@@ -19,6 +21,8 @@ class RelayEditor {
 		this.#dialogOverlay = root.querySelector('.relay-dialog-overlay');
 		this.#dialogFilename = root.querySelector('.relay-dialog-filename');
 		this.#saveDialog = root.querySelector('#relay-save-dialog');
+		this.#panel = root.querySelector('#relay-panel');
+		this.#panelBackdrop = root.querySelector('#relay-panel-backdrop');
 
 		this.#charcount.textContent = this.#textarea.value.length;
 		this.#restoreFromUrl();
@@ -110,6 +114,16 @@ class RelayEditor {
 		this.#textarea.focus();
 	}
 
+	#togglePanel() {
+		const isOpen = this.#panel.classList.toggle('relay-panel--open');
+		this.#panelBackdrop?.classList.toggle('relay-panel-backdrop--visible', isOpen);
+	}
+
+	#closePanel() {
+		this.#panel.classList.remove('relay-panel--open');
+		this.#panelBackdrop?.classList.remove('relay-panel-backdrop--visible');
+	}
+
 	#confirmLoad() {
 		this.#textarea.focus();
 		this.#textarea.select();
@@ -191,6 +205,16 @@ class RelayEditor {
 				if (event.key === 'Enter') saveConfirmBtn.click();
 				if (event.key === 'Escape') this.#hideSaveDialog();
 			});
+		}
+
+		if (this.#panel) {
+			const listBtn = container.querySelector('#relay-list-btn');
+			const panelCloseBtn = this.#panel.querySelector('#relay-panel-close');
+
+			listBtn?.addEventListener('click', () => this.#togglePanel());
+			panelCloseBtn?.addEventListener('click', () => this.#closePanel());
+
+			this.#panelBackdrop?.addEventListener('click', () => this.#closePanel());
 		}
 	}
 }
