@@ -263,6 +263,8 @@ body {
 
 .relay-gutter {
 	overflow: hidden;
+	flex-shrink: 0;
+	width: calc(4ch + 1.75rem);
 	background: #000;
 	font-family: monospace;
 	font-size: 14px;
@@ -305,6 +307,8 @@ body {
 }
 
 .relay-modeline {
+	position: sticky;
+	bottom: 0;
 	background: #111;
 	border-top: 1px solid #1a1a1a;
 	height: 24px;
@@ -320,9 +324,44 @@ body {
 	color: #5c5c5c;
 }
 
+.relay-save-form {
+	display: flex;
+	align-items: center;
+	margin-left: auto;
+}
+
+.relay-container:has(#relay-input:placeholder-shown) .relay-save-form {
+	display: none;
+}
+
+.relay-save-btn {
+	all: unset;
+	padding: 0 1rem;
+	font-family: monospace;
+	font-size: 12px;
+	color: #b90074;
+	cursor: pointer;
+}
+
+.relay-save-btn:hover {
+	color: #804654;
+}
+
+.relay-link {
+	padding: 0 1rem;
+	font-family: monospace;
+	font-size: 12px;
+	color: #b0a482;
+	text-decoration: none;
+}
+
+.relay-link:hover {
+	text-decoration: underline;
+}
+
 .relay-dialog-overlay {
 	display: none;
-	position: absolute;
+	position: fixed;
 	inset: 0;
 	background: rgba(0, 0, 0, 0.75);
 	align-items: center;
