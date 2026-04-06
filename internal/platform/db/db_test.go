@@ -71,6 +71,9 @@ func TestOpen_MigrationsTracked(t *testing.T) {
 		{3, "003_create_relays"},
 		{4, "004_create_roles"},
 		{5, "005_create_users_roles"},
+		{6, "006_add_relay_private_mode"},
+		{7, "007_add_relay_expire_at"},
+		{8, "008_drop_relay_private"},
 	}
 
 	if len(records) != len(want) {
@@ -107,8 +110,8 @@ func TestOpen_MigrationIdempotent(t *testing.T) {
 		t.Fatalf("count schema_migrations: %v", err)
 	}
 
-	if count != 5 {
-		t.Errorf("schema_migrations count: got %d, want 5", count)
+	if count != 8 {
+		t.Errorf("schema_migrations count: got %d, want 8", count)
 	}
 }
 
@@ -188,8 +191,8 @@ func TestOpen_SchemaConstraints(t *testing.T) {
 	// Valid relay referencing the user must succeed
 	newRelayID := "13586f4c-7aa8-4392-9b31-77d8031406b9"
 	_, err = database.Exec(
-		"INSERT INTO relays (id, user_id, content, private, created_at) VALUES (?, ?, ?, ?, ?)",
-		newRelayID, newUserID, []byte("compressed"), 0, 1000,
+		"INSERT INTO relays (id, user_id, content, private_mode, expire_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		newRelayID, newUserID, []byte("compressed"), "link", 9999, 1000,
 	)
 	if err != nil {
 		t.Errorf("insert valid relay: %v", err)

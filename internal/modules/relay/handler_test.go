@@ -213,13 +213,117 @@ func TestSave_HTMLContentInLink_DoesNotEscapeRelayID(t *testing.T) {
 	}
 }
 
+func TestSave_WithVisibilityPrivate_Saves(t *testing.T) {
+	form := url.Values{"text": {"secret content"}, "visibility": {"user"}}
+
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Save(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+
+	if body := recorder.Body.String(); !strings.Contains(body, "/relay/") {
+		t.Errorf("response does not contain relay link: %q", body)
+	}
+}
+
+func TestSave_WithExpireAt7d_Saves(t *testing.T) {
+	form := url.Values{"text": {"text"}, "expire_at": {"7d"}}
+
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Save(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+}
+
+func TestSave_WithExpireAt30d_Saves(t *testing.T) {
+	form := url.Values{"text": {"text"}, "expire_at": {"30d"}}
+
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Save(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+}
+
+func TestSave_InvalidVisibility_DefaultsToLink(t *testing.T) {
+	form := url.Values{"text": {"text"}, "visibility": {"bogus"}}
+
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Save(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+}
+
+func TestSave_InvalidExpireAt_DefaultsTo1d(t *testing.T) {
+	form := url.Values{"text": {"text"}, "expire_at": {"bogus"}}
+
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Save(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+}
+
 func TestView_SeededRelay_RendersContent(t *testing.T) {
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
 
 	service := relay.NewService(database)
 
-	relayID, err := service.Save(userID, "let's all love lain")
+	relayID, err := service.Save(userID, "let's all love lain", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("seed relay: %v", err)
 	}
@@ -255,7 +359,7 @@ func TestView_SeededRelay_IsReadOnly(t *testing.T) {
 
 	service := relay.NewService(database)
 
-	relayID, err := service.Save(userID, "archived")
+	relayID, err := service.Save(userID, "archived", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("seed relay: %v", err)
 	}
@@ -319,7 +423,7 @@ func TestView_AuthenticatedUser_DoesNotSetUserInData(t *testing.T) {
 
 	service := relay.NewService(database)
 
-	relayID, err := service.Save(userID, "text")
+	relayID, err := service.Save(userID, "text", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("seed relay: %v", err)
 	}
@@ -348,7 +452,7 @@ func TestView_RendererError_Returns500(t *testing.T) {
 
 	service := relay.NewService(database)
 
-	relayID, err := service.Save(userID, "text")
+	relayID, err := service.Save(userID, "text", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("seed relay: %v", err)
 	}
@@ -361,5 +465,86 @@ func TestView_RendererError_Returns500(t *testing.T) {
 
 	if recorder.Code != http.StatusInternalServerError {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestView_PrivateRelay_WithOwner_Renders(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	relayID, err := service.Save(userID, "private text", relay.PrivateModeUser, futureExpiry())
+	if err != nil {
+		t.Fatalf("seed relay: %v", err)
+	}
+
+	renderer := &mockRenderer{}
+	handler := relay.NewHandler(renderer, service)
+
+	request := withRelayRouteID(httptest.NewRequest(http.MethodGet, "/relay/"+relayID, nil), relayID)
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.View(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+}
+
+func TestView_PrivateRelay_WithoutAuth_RedirectsToRelay(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	relayID, err := service.Save(userID, "private text", relay.PrivateModeUser, futureExpiry())
+	if err != nil {
+		t.Fatalf("seed relay: %v", err)
+	}
+
+	handler := relay.NewHandler(&mockRenderer{}, service)
+
+	recorder := httptest.NewRecorder()
+	request := withRelayRouteID(httptest.NewRequest(http.MethodGet, "/relay/"+relayID, nil), relayID)
+	handler.View(recorder, request)
+
+	if recorder.Code != http.StatusSeeOther {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusSeeOther)
+	}
+
+	if location := recorder.Header().Get("Location"); location != "/relay" {
+		t.Errorf("redirect location: got %q, want %q", location, "/relay")
+	}
+}
+
+func TestView_PrivateRelay_WithNonOwner_RedirectsToRelay(t *testing.T) {
+	database := openTestDB(t)
+	ownerID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	relayID, err := service.Save(ownerID, "private text", relay.PrivateModeUser, futureExpiry())
+	if err != nil {
+		t.Fatalf("seed relay: %v", err)
+	}
+
+	handler := relay.NewHandler(&mockRenderer{}, service)
+
+	request := withRelayRouteID(httptest.NewRequest(http.MethodGet, "/relay/"+relayID, nil), relayID)
+	request = request.WithContext(
+		auth.WithUser(request.Context(), auth.User{ID: "uwu?", Username: "wire"}),
+	)
+
+	recorder := httptest.NewRecorder()
+	handler.View(recorder, request)
+
+	if recorder.Code != http.StatusSeeOther {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusSeeOther)
+	}
+
+	if location := recorder.Header().Get("Location"); location != "/relay" {
+		t.Errorf("redirect location: got %q, want %q", location, "/relay")
 	}
 }

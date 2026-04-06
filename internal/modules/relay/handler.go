@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"meryl.moe/internal/platform/auth"
@@ -62,9 +63,24 @@ func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
+	visibility := request.FormValue("visibility")
+	if visibility != PrivateModeUser && visibility != PrivateModeLink {
+		visibility = PrivateModeLink
+	}
+
+	var expiresAt time.Time
+	switch request.FormValue("expire_at") {
+	case "7d":
+		expiresAt = time.Now().Add(7 * 24 * time.Hour)
+	case "30d":
+		expiresAt = time.Now().Add(30 * 24 * time.Hour)
+	default:
+		expiresAt = time.Now().Add(24 * time.Hour)
+	}
+
 	user, _ := auth.AuthUser(request.Context())
 
-	relayID, err := handler.service.Save(user.ID, text)
+	relayID, err := handler.service.Save(user.ID, text, visibility, expiresAt)
 	if err != nil {
 		log.Printf("relay: save: %v", err)
 		http.Error(writer, "internal server error", http.StatusInternalServerError)
@@ -85,7 +101,7 @@ func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) 
 func (handler *Handler) View(writer http.ResponseWriter, request *http.Request) {
 	relayID := chi.URLParam(request, "id")
 
-	text, err := handler.service.Get(relayID)
+	savedRelay, err := handler.service.Get(relayID)
 	if errors.Is(err, ErrNotFound) {
 		http.Redirect(writer, request, "/relay", http.StatusSeeOther)
 		return
@@ -98,11 +114,19 @@ func (handler *Handler) View(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
+	if savedRelay.PrivateMode == PrivateModeUser {
+		viewer, ok := auth.AuthUser(request.Context())
+		if !ok || viewer.ID != savedRelay.UserID {
+			http.Redirect(writer, request, "/relay", http.StatusSeeOther)
+			return
+		}
+	}
+
 	pageFile := "modules/relay/relay.html"
 	data := map[string]any{
 		"Page":     "relay",
 		"Title":    "relay - meryl.moe",
-		"Content":  text,
+		"Content":  savedRelay.Content,
 		"ReadOnly": true,
 	}
 

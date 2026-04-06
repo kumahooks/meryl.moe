@@ -15,6 +15,20 @@ import (
 // ErrNotFound is returned when a relay with the given ID does not exist.
 var ErrNotFound = errors.New("relay not found")
 
+const (
+	PrivateModeLink = "link"
+	PrivateModeUser = "user"
+)
+
+// Relay represents a stored relay with its metadata.
+type Relay struct {
+	ID          string
+	UserID      string
+	Content     string
+	PrivateMode string
+	ExpiresAt   time.Time
+}
+
 // Service handles relay persistence.
 type Service struct {
 	database *sql.DB
@@ -25,8 +39,8 @@ func NewService(database *sql.DB) *Service {
 	return &Service{database: database}
 }
 
-// Save compresses text and stores it for the given user. Returns the new relay ID.
-func (service *Service) Save(userID string, text string) (string, error) {
+// Save compresses text and stores it with the given options. Returns the new relay ID.
+func (service *Service) Save(userID string, text string, privateMode string, expiresAt time.Time) (string, error) {
 	compressed, err := compressText(text)
 	if err != nil {
 		return "", fmt.Errorf("compress relay content: %w", err)
@@ -36,8 +50,8 @@ func (service *Service) Save(userID string, text string) (string, error) {
 	now := time.Now().Unix()
 
 	if _, err := service.database.Exec(
-		"INSERT INTO relays (id, user_id, content, private, created_at) VALUES (?, ?, ?, 0, ?)",
-		relayID, userID, compressed, now,
+		"INSERT INTO relays (id, user_id, content, private_mode, expire_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		relayID, userID, compressed, privateMode, expiresAt.Unix(), now,
 	); err != nil {
 		return "", fmt.Errorf("insert relay: %w", err)
 	}
@@ -45,24 +59,34 @@ func (service *Service) Save(userID string, text string) (string, error) {
 	return relayID, nil
 }
 
-// Get retrieves and decompresses the text content of the relay with the given ID.
-// Returns ErrNotFound if no relay with that ID exists.
-func (service *Service) Get(id string) (string, error) {
+// Get retrieves a relay by ID. Returns ErrNotFound if no relay with that ID exists.
+func (service *Service) Get(id string) (*Relay, error) {
 	var compressed []byte
+	var expiresAtUnix int64
+
+	savedRelay := &Relay{ID: id}
 
 	err := service.database.QueryRow(
-		"SELECT content FROM relays WHERE id = ?", id,
-	).Scan(&compressed)
+		"SELECT user_id, content, private_mode, expire_at FROM relays WHERE id = ?", id,
+	).Scan(&savedRelay.UserID, &compressed, &savedRelay.PrivateMode, &expiresAtUnix)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("query relay: %w", err)
+		return nil, fmt.Errorf("query relay: %w", err)
 	}
 
-	return decompressText(compressed)
+	content, err := decompressText(compressed)
+	if err != nil {
+		return nil, err
+	}
+
+	savedRelay.Content = content
+	savedRelay.ExpiresAt = time.Unix(expiresAtUnix, 0)
+
+	return savedRelay, nil
 }
 
 func compressText(text string) ([]byte, error) {

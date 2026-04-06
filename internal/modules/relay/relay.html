@@ -37,12 +37,41 @@
 		<div id="relay-save-dialog" class="relay-dialog-overlay">
 			<div class="relay-dialog">
 				<p class="relay-dialog-message">save relay?</p>
-				<p class="relay-dialog-sub">a permanent link will be created.</p>
+
+				<div class="relay-dialog-options">
+					<fieldset class="relay-dialog-fieldset">
+						<legend class="relay-dialog-legend">visibility</legend>
+
+						<label class="relay-dialog-option">
+							<input type="radio" name="visibility" value="link" checked class="relay-save-option"> anyone with the link
+						</label>
+
+						<label class="relay-dialog-option">
+							<input type="radio" name="visibility" value="user" class="relay-save-option"> only me
+						</label>
+					</fieldset>
+
+					<fieldset class="relay-dialog-fieldset">
+						<legend class="relay-dialog-legend">expiration</legend>
+
+						<label class="relay-dialog-option">
+							<input type="radio" name="expire_at" value="1d" checked class="relay-save-option"> 1 day
+						</label>
+
+						<label class="relay-dialog-option">
+							<input type="radio" name="expire_at" value="7d" class="relay-save-option"> 7 days
+						</label>
+
+						<label class="relay-dialog-option">
+							<input type="radio" name="expire_at" value="30d" class="relay-save-option"> 30 days
+						</label>
+					</fieldset>
+				</div>
 
 				<div class="relay-dialog-actions">
 					<button class="relay-dialog-btn relay-dialog-btn--confirm"
 						hx-post="/relay"
-						hx-include="#relay-input"
+						hx-include="#relay-input, .relay-save-option:checked"
 						hx-target="#relay-save-result"
 						hx-swap="innerHTML">save</button>
 					<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>

@@ -40,6 +40,10 @@ func insertTestUser(t *testing.T, database *sql.DB) string {
 	return userID
 }
 
+func futureExpiry() time.Time {
+	return time.Now().Add(24 * time.Hour)
+}
+
 func TestService_SaveAndGet_RoundTrip(t *testing.T) {
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
@@ -48,18 +52,18 @@ func TestService_SaveAndGet_RoundTrip(t *testing.T) {
 
 	original := "hello, wired\n\nlet's all love lain"
 
-	relayID, err := service.Save(userID, original)
+	relayID, err := service.Save(userID, original, relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("save: %v", err)
 	}
 
-	got, err := service.Get(relayID)
+	savedRelay, err := service.Get(relayID)
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
 
-	if got != original {
-		t.Errorf("round-trip content: got %q, want %q", got, original)
+	if savedRelay.Content != original {
+		t.Errorf("round-trip content: got %q, want %q", savedRelay.Content, original)
 	}
 }
 
@@ -70,18 +74,18 @@ func TestService_SaveAndGet_Unicode(t *testing.T) {
 
 	original := "你好，小可爱\n<script>alert('xss')</script>\n\u0000null\naccénts & êntités"
 
-	relayID, err := service.Save(userID, original)
+	relayID, err := service.Save(userID, original, relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("save: %v", err)
 	}
 
-	got, err := service.Get(relayID)
+	savedRelay, err := service.Get(relayID)
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
 
-	if got != original {
-		t.Errorf("unicode round-trip failed: got %q, want %q", got, original)
+	if savedRelay.Content != original {
+		t.Errorf("unicode round-trip failed: got %q, want %q", savedRelay.Content, original)
 	}
 }
 
@@ -93,18 +97,18 @@ func TestService_SaveAndGet_LargeContent(t *testing.T) {
 
 	original := strings.Repeat("<lain wired owouwu o7>", 10_000)
 
-	relayID, err := service.Save(userID, original)
+	relayID, err := service.Save(userID, original, relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("save large content: %v", err)
 	}
 
-	got, err := service.Get(relayID)
+	savedRelay, err := service.Get(relayID)
 	if err != nil {
 		t.Fatalf("get large content: %v", err)
 	}
 
-	if got != original {
-		t.Errorf("large content round-trip failed: lengths got %d, want %d", len(got), len(original))
+	if savedRelay.Content != original {
+		t.Errorf("large content round-trip failed: lengths got %d, want %d", len(savedRelay.Content), len(original))
 	}
 }
 
@@ -140,12 +144,12 @@ func TestService_Save_ReturnsDistinctIDs(t *testing.T) {
 
 	service := relay.NewService(database)
 
-	firstID, err := service.Save(userID, "first")
+	firstID, err := service.Save(userID, "first", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("first save: %v", err)
 	}
 
-	secondID, err := service.Save(userID, "second")
+	secondID, err := service.Save(userID, "second", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("second save: %v", err)
 	}
@@ -160,17 +164,100 @@ func TestService_Save_SameContentProducesDistinctIDs(t *testing.T) {
 	userID := insertTestUser(t, database)
 	service := relay.NewService(database)
 
-	firstID, err := service.Save(userID, "lain")
+	firstID, err := service.Save(userID, "lain", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("first save: %v", err)
 	}
 
-	secondID, err := service.Save(userID, "lain")
+	secondID, err := service.Save(userID, "lain", relay.PrivateModeLink, futureExpiry())
 	if err != nil {
 		t.Fatalf("second save: %v", err)
 	}
 
 	if firstID == secondID {
 		t.Errorf("same content produced the same ID; IDs must be unique")
+	}
+}
+
+func TestService_Get_ReturnsCorrectUserID(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+	service := relay.NewService(database)
+
+	relayID, err := service.Save(userID, "wired", relay.PrivateModeLink, futureExpiry())
+	if err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	savedRelay, err := service.Get(relayID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if savedRelay.UserID != userID {
+		t.Errorf("user ID: got %q, want %q", savedRelay.UserID, userID)
+	}
+}
+
+func TestService_Save_PrivateMode_StoresMode(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	relayID, err := service.Save(userID, "secret", relay.PrivateModeUser, futureExpiry())
+	if err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	savedRelay, err := service.Get(relayID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if savedRelay.PrivateMode != relay.PrivateModeUser {
+		t.Errorf("private mode: got %q, want %q", savedRelay.PrivateMode, relay.PrivateModeUser)
+	}
+}
+
+func TestService_Save_PublicMode_StoresMode(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+	service := relay.NewService(database)
+
+	relayID, err := service.Save(userID, "public content", relay.PrivateModeLink, futureExpiry())
+	if err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	savedRelay, err := service.Get(relayID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if savedRelay.PrivateMode != relay.PrivateModeLink {
+		t.Errorf("private mode: got %q, want %q", savedRelay.PrivateMode, relay.PrivateModeLink)
+	}
+}
+
+func TestService_Save_ExpiresAt_IsStoredAndRetrieved(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+	service := relay.NewService(database)
+
+	expiresAt := time.Now().Add(7 * 24 * time.Hour).Truncate(time.Second)
+
+	relayID, err := service.Save(userID, "text", relay.PrivateModeLink, expiresAt)
+	if err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	savedRelay, err := service.Get(relayID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if !savedRelay.ExpiresAt.Equal(expiresAt) {
+		t.Errorf("expires at: got %v, want %v", savedRelay.ExpiresAt, expiresAt)
 	}
 }

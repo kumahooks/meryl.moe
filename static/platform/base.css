@@ -423,6 +423,53 @@ body {
 	outline-offset: 2px;
 }
 
+.relay-dialog-options {
+	display: flex;
+	gap: 2rem;
+	margin-bottom: 1.25rem;
+}
+
+.relay-dialog-fieldset {
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.relay-dialog-legend {
+	color: #5c5c5c;
+	margin-bottom: 0.5rem;
+	padding: 0;
+}
+
+.relay-dialog-option {
+	display: block;
+	color: #9c9c9c;
+	cursor: pointer;
+	margin-bottom: 0.25rem;
+}
+
+.relay-dialog-option:has(input:checked) {
+	color: #fff;
+}
+
+.relay-dialog-option input[type="radio"] {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 0.55rem;
+	height: 0.55rem;
+	border: 1px solid #2a2a2a;
+	border-radius: 50%;
+	background: #111;
+	cursor: pointer;
+	vertical-align: middle;
+	margin-right: 0.3rem;
+}
+
+.relay-dialog-option input[type="radio"]:checked {
+	background: #804654;
+	border-color: #804654;
+}
+
 /* --- notfound --- */
 .page-content--notfound {
 	min-height: 100vh;

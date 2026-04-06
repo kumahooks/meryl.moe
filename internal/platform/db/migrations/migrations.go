@@ -19,5 +19,8 @@ func All() []Migration {
 		{3, "003_create_relays", createRelays},
 		{4, "004_create_roles", createRoles},
 		{5, "005_create_users_roles", createUsersRoles},
+		{6, "006_add_relay_private_mode", addRelayPrivateMode},
+		{7, "007_add_relay_expire_at", addRelayExpireAt},
+		{8, "008_drop_relay_private", dropRelayPrivate},
 	}
 }
