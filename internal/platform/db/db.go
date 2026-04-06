@@ -17,6 +17,13 @@ func Open(path string) (*sql.DB, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
+	// TODO: validate if this is fine
+	// tests were failing because multiple connections were being opened,
+	// and FK wasn't being enforced in some of them. This fixes it, whcih ensures
+	// only one valid connection with all the PRAGMAs are set, but still need to
+	// make sure this is fine
+	database.SetMaxOpenConns(1)
+
 	log.Printf("database: opened %s", path)
 
 	if err := configure(database); err != nil {

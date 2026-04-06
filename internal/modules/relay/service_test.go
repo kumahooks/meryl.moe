@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"meryl.moe/internal/modules/relay"
 	"meryl.moe/internal/platform/db"
 )
@@ -27,12 +28,12 @@ func openTestDB(t *testing.T) *sql.DB {
 func insertTestUser(t *testing.T, database *sql.DB) string {
 	t.Helper()
 
-	userID := "344bab10-0913-4fa0-824c-5ea9d4548d85"
+	userID := uuid.New().String()
 	now := time.Now().Unix()
 
 	if _, err := database.Exec(
 		"INSERT INTO users (id, username, password_hash, updated_at, created_at) VALUES (?, ?, ?, ?, ?)",
-		userID, "lain", "irrelevant", now, now,
+		userID, userID, "irrelevant", now, now,
 	); err != nil {
 		t.Fatalf("insert test user: %v", err)
 	}
@@ -42,6 +43,23 @@ func insertTestUser(t *testing.T, database *sql.DB) string {
 
 func futureExpiry() time.Time {
 	return time.Now().Add(24 * time.Hour)
+}
+
+func insertTestRelay(t *testing.T, database *sql.DB, userID string, createdAt int64) string {
+	t.Helper()
+
+	relayID := uuid.New().String()
+	// represents "old" in bytes
+	compressedPlaceholder := []byte{120, 156, 202, 207, 73, 1, 4, 0, 0, 255, 255, 2, 140, 1, 64}
+
+	if _, err := database.Exec(
+		"INSERT INTO relays (id, user_id, content, private_mode, expire_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		relayID, userID, compressedPlaceholder, relay.PrivateModeLink, futureExpiry().Unix(), createdAt,
+	); err != nil {
+		t.Fatalf("insert test relay: %v", err)
+	}
+
+	return relayID
 }
 
 func TestService_SaveAndGet_RoundTrip(t *testing.T) {
@@ -259,5 +277,184 @@ func TestService_Save_ExpiresAt_IsStoredAndRetrieved(t *testing.T) {
 
 	if !savedRelay.ExpiresAt.Equal(expiresAt) {
 		t.Errorf("expires at: got %v, want %v", savedRelay.ExpiresAt, expiresAt)
+	}
+}
+
+func TestService_List_Empty_ReturnsNil(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if items != nil {
+		t.Errorf("expected nil for user with no relays, got %v", items)
+	}
+}
+
+func TestService_List_ReturnsNewestFirst(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	oldRelayID := insertTestRelay(t, database, userID, 1000)
+	newRelayID, err := service.Save(userID, "new", relay.PrivateModeLink, futureExpiry())
+	if err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(items) != 2 {
+		t.Fatalf("list length: got %d, want 2", len(items))
+	}
+
+	if items[0].ID != newRelayID {
+		t.Errorf("first item: got %q, want %q (newest)", items[0].ID, newRelayID)
+	}
+
+	if items[1].ID != oldRelayID {
+		t.Errorf("second item: got %q, want %q (oldest)", items[1].ID, oldRelayID)
+	}
+}
+
+func TestService_List_PreviewTruncatedTo15Runes(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	if _, err := service.Save(userID, "lainlainlainlainlainlain", relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if items[0].Preview != "lainlainlainlai..." {
+		t.Errorf("preview: got %q, want %q", items[0].Preview, "lainlainlainlai...")
+	}
+}
+
+func TestService_List_PreviewShortContentUnchanged(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	if _, err := service.Save(userID, "owo?", relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if items[0].Preview != "owo?" {
+		t.Errorf("preview: got %q, want %q", items[0].Preview, "owo?")
+	}
+}
+
+func TestService_List_PreviewUnicodeTruncatesOnRuneBoundary(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	// Each hanzi is one rune but multiple bytes
+	content := "你你你你lainlainlainlainlain"
+	if _, err := service.Save(userID, content, relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	want := "你你你你lainlainlai..."
+	if items[0].Preview != want {
+		t.Errorf("preview: got %q, want %q", items[0].Preview, want)
+	}
+}
+
+func TestService_List_PrivateModeIsReturned(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	if _, err := service.Save(userID, "secret", relay.PrivateModeUser, futureExpiry()); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if items[0].PrivateMode != relay.PrivateModeUser {
+		t.Errorf("private mode: got %q, want %q", items[0].PrivateMode, relay.PrivateModeUser)
+	}
+}
+
+func TestService_List_DateFormattedAsYYYYMMDD(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	if _, err := service.Save(userID, "dated", relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	items, err := service.List(userID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	want := time.Now().Format("2006-01-02")
+	if items[0].Date != want {
+		t.Errorf("date: got %q, want %q", items[0].Date, want)
+	}
+}
+
+func TestService_List_OnlyReturnsOwnRelays(t *testing.T) {
+	database := openTestDB(t)
+	firstUserID := insertTestUser(t, database)
+	secondUserID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+
+	if _, err := service.Save(firstUserID, "mine", relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("save own relay: %v", err)
+	}
+
+	if _, err := service.Save(secondUserID, "theirs", relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("save other relay: %v", err)
+	}
+
+	items, err := service.List(firstUserID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(items) != 1 {
+		t.Fatalf("list length: got %d, want 1", len(items))
+	}
+
+	if items[0].Preview != "mine" {
+		t.Errorf("preview: got %q, want %q", items[0].Preview, "mine")
 	}
 }

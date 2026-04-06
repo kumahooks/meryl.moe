@@ -470,6 +470,131 @@ body {
 	border-color: #804654;
 }
 
+.relay-list-btn {
+	all: unset;
+	padding: 0 1rem;
+	font-family: monospace;
+	font-size: 12px;
+	color: #5c5c5c;
+	cursor: pointer;
+}
+
+.relay-list-btn:hover {
+	color: #b0a482;
+}
+
+.relay-panel-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 49;
+}
+
+.relay-panel-backdrop--visible {
+	display: block;
+}
+
+.relay-panel {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 260px;
+	background: #0d0d0d;
+	border-left: 1px solid #2a2a2a;
+	display: flex;
+	flex-direction: column;
+	font-family: monospace;
+	font-size: 13px;
+	transform: translateX(100%);
+	transition: transform 0.2s ease;
+	z-index: 50;
+}
+
+.relay-panel--open {
+	transform: translateX(0);
+}
+
+.relay-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 1rem;
+	height: 24px;
+	border-bottom: 1px solid #2a2a2a;
+	flex-shrink: 0;
+}
+
+.relay-panel-title {
+	color: #5c5c5c;
+}
+
+.relay-panel-close {
+	all: unset;
+	color: #5c5c5c;
+	cursor: pointer;
+	font-size: 12px;
+}
+
+.relay-panel-close:hover {
+	color: #b0a482;
+}
+
+.relay-panel-items {
+	overflow-y: auto;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.relay-panel-item {
+	display: flex;
+	flex-direction: column;
+	padding: 0.5rem 1rem;
+	text-decoration: none;
+	border-bottom: 1px solid #1a1a1a;
+	gap: 0.15rem;
+}
+
+.relay-panel-item:hover {
+	background: #161616;
+}
+
+.relay-panel-preview {
+	color: #b0a482;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.relay-panel-meta {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.relay-panel-date {
+	color: #5c5c5c;
+	font-size: 11px;
+}
+
+.relay-panel-tag {
+	font-size: 11px;
+	padding: 0 0.25rem;
+	border: 1px solid #2a2a2a;
+	color: #5c5c5c;
+}
+
+.relay-panel-tag--user {
+	color: #804654;
+	border-color: #804654;
+}
+
+.relay-panel-empty {
+	padding: 1rem;
+	color: #5c5c5c;
+}
+
 /* --- notfound --- */
 .page-content--notfound {
 	min-height: 100vh;

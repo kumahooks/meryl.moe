@@ -137,7 +137,7 @@ func TestSave_Unauthenticated_Returns500(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	handler.Save(recorder, request)
 
-	if recorder.Code != http.StatusInternalServerError {
+	if recorder.Code != http.StatusForbidden {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
 	}
 }
@@ -413,36 +413,6 @@ func TestView_SQLInjectionID_RedirectsToRelay(t *testing.T) {
 		if recorder.Code != http.StatusSeeOther {
 			t.Errorf("SQL injection ID %q: got status %d, want %d", maliciousID, recorder.Code, http.StatusSeeOther)
 		}
-	}
-}
-
-func TestView_AuthenticatedUser_DoesNotSetUserInData(t *testing.T) {
-	// Save button must not appear on read-only views; User is intentionally omitted.
-	database := openTestDB(t)
-	userID := insertTestUser(t, database)
-
-	service := relay.NewService(database)
-
-	relayID, err := service.Save(userID, "text", relay.PrivateModeLink, futureExpiry())
-	if err != nil {
-		t.Fatalf("seed relay: %v", err)
-	}
-
-	renderer := &mockRenderer{}
-	handler := relay.NewHandler(renderer, service)
-
-	request := withRelayRouteID(httptest.NewRequest(http.MethodGet, "/relay/"+relayID, nil), relayID)
-	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
-
-	handler.View(httptest.NewRecorder(), request)
-
-	dataMap, ok := renderer.lastData.(map[string]any)
-	if !ok {
-		t.Fatal("render data is not map[string]any")
-	}
-
-	if _, hasUser := dataMap["User"]; hasUser {
-		t.Error("User must not be set in render data for read-only view")
 	}
 }
 

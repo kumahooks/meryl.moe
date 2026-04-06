@@ -42,6 +42,13 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 
 	if user, ok := auth.AuthUser(request.Context()); ok {
 		data["User"] = user
+
+		relays, err := handler.service.List(user.ID)
+		if err != nil {
+			log.Printf("relay: index: list: %v", err)
+		} else {
+			data["Relays"] = relays
+		}
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
@@ -79,10 +86,15 @@ func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) 
 	}
 
 	user, _ := auth.AuthUser(request.Context())
+	// TODO: is this fine?
+	if user.ID == "" {
+		http.Error(writer, "invalid user", http.StatusForbidden)
+
+		return
+	}
 
 	relayID, err := handler.service.Save(user.ID, text, visibility, expiresAt)
 	if err != nil {
-		log.Printf("relay: save: %v", err)
 		http.Error(writer, "internal server error", http.StatusInternalServerError)
 
 		return
@@ -128,6 +140,17 @@ func (handler *Handler) View(writer http.ResponseWriter, request *http.Request) 
 		"Title":    "relay - meryl.moe",
 		"Content":  savedRelay.Content,
 		"ReadOnly": true,
+	}
+
+	if user, ok := auth.AuthUser(request.Context()); ok {
+		data["User"] = user
+
+		relays, err := handler.service.List(user.ID)
+		if err != nil {
+			log.Printf("relay: view: list: %v", err)
+		} else {
+			data["Relays"] = relays
+		}
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {

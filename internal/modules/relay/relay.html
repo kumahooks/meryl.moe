@@ -14,6 +14,8 @@
 			<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
 
 			{{if .User}}
+			<button type="button" id="relay-list-btn" class="relay-list-btn">my relays</button>
+
 			<div class="relay-save-form">
 				<span id="relay-save-result"></span>
 				<button type="button" id="relay-save-btn" class="relay-save-btn">save*</button>
@@ -32,6 +34,34 @@
 				</div>
 			</div>
 		</div>
+
+		{{if .User}}
+		<div id="relay-panel-backdrop" class="relay-panel-backdrop"></div>
+
+		<div id="relay-panel" class="relay-panel">
+			<div class="relay-panel-header">
+				<span class="relay-panel-title">relays</span>
+				<button type="button" id="relay-panel-close" class="relay-panel-close">close</button>
+			</div>
+
+			<div class="relay-panel-items">
+				{{if .Relays}}
+					{{range .Relays}}
+					<a href="/relay/{{.ID}}" class="relay-panel-item">
+						<span class="relay-panel-preview">{{.Preview}}</span>
+
+						<span class="relay-panel-meta">
+							<span class="relay-panel-date">{{.Date}}</span>
+							<span class="relay-panel-tag relay-panel-tag--{{.PrivateMode}}">{{.PrivateMode}}</span>
+						</span>
+					</a>
+					{{end}}
+				{{else}}
+					<span class="relay-panel-empty">no relays yet</span>
+				{{end}}
+			</div>
+		</div>
+		{{end}}
 
 		{{if .User}}
 		<div id="relay-save-dialog" class="relay-dialog-overlay">
