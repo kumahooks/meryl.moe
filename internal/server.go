@@ -32,20 +32,27 @@ import (
 	"meryl.moe/internal/modules/whoami"
 	"meryl.moe/internal/modules/wired"
 	"meryl.moe/internal/platform/auth"
+	"meryl.moe/internal/platform/dispatch"
 	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
+	"meryl.moe/internal/platform/worker"
 )
 
 // Server holds the Chi router and application configuration.
 type Server struct {
-	router   *chi.Mux
-	config   *config.Config
-	logFile  io.Closer
-	database *sql.DB
+	router     *chi.Mux
+	config     *config.Config
+	logFile    io.Closer
+	database   *sql.DB
+	dispatcher *dispatch.Dispatcher
 }
 
 // NewServer creates a Server with global middleware applied.
-func NewServer(configuration *config.Config, database *sql.DB) *Server {
+func NewServer(
+	configuration *config.Config,
+	database *sql.DB,
+	dispatcher *dispatch.Dispatcher,
+) *Server {
 	router := chi.NewRouter()
 
 	router.Use(chiMiddleware.Logger)
@@ -54,9 +61,10 @@ func NewServer(configuration *config.Config, database *sql.DB) *Server {
 	router.Use(middleware.LoadAuth(database))
 
 	return &Server{
-		router:   router,
-		config:   configuration,
-		database: database,
+		router:     router,
+		config:     configuration,
+		database:   database,
+		dispatcher: dispatcher,
 	}
 }
 
@@ -141,7 +149,12 @@ func (server *Server) Initialize() error {
 		return fmt.Errorf("auth service: %w", err)
 	}
 
-	wiredHandler := wired.NewHandler(templateManager, authService, server.config.App.Dev)
+	wiredHandler := wired.NewHandler(
+		templateManager,
+		authService,
+		server.config.App.Dev,
+		server.dispatcher,
+	)
 
 	server.RegisterRoutes(
 		home.Routes(homeHandler),
@@ -185,7 +198,7 @@ func (server *Server) initLogging() (io.Closer, error) {
 // Start binds the server to addr and begins serving requests.
 // Blocks until SIGINT or SIGTERM is received, then drains in-flight requests
 // with a 30-second deadline before returning.
-func (server *Server) Start(addr string) error {
+func (server *Server) Start(addr string, workerRunner *worker.JobRunner) error {
 	log.Printf("Starting server on %s", addr)
 
 	httpServer := &http.Server{
@@ -198,6 +211,8 @@ func (server *Server) Start(addr string) error {
 
 	shutdownContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	workerRunner.Start(shutdownContext)
 
 	serverErrors := make(chan error, 1)
 	go func() {

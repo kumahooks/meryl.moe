@@ -75,7 +75,8 @@ func (service *Service) Get(id string) (*Relay, error) {
 	savedRelay := &Relay{ID: id}
 
 	err := service.database.QueryRow(
-		"SELECT user_id, content, private_mode, expire_at FROM relays WHERE id = ?", id,
+		"SELECT user_id, content, private_mode, expire_at FROM relays WHERE id = ? AND expire_at > ?",
+		id, time.Now().Unix(),
 	).Scan(&savedRelay.UserID, &compressed, &savedRelay.PrivateMode, &expiresAtUnix)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -100,8 +101,9 @@ func (service *Service) Get(id string) (*Relay, error) {
 // List returns a summary of all relays belonging to userID, newest first.
 func (service *Service) List(userID string) ([]RelayListItem, error) {
 	rows, err := service.database.Query(
-		"SELECT id, content, private_mode, created_at FROM relays WHERE user_id = ? ORDER BY created_at DESC",
+		"SELECT id, content, private_mode, created_at FROM relays WHERE user_id = ? AND expire_at > ? ORDER BY created_at DESC",
 		userID,
+		time.Now().Unix(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("query relays: %w", err)
