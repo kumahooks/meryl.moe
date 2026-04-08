@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"meryl.moe/internal/platform/auth"
+	"meryl.moe/internal/platform/dispatch"
 	"meryl.moe/internal/platform/middleware"
 	"meryl.moe/internal/platform/templates"
 )
@@ -18,14 +19,21 @@ import (
 type Handler struct {
 	renderer     templates.Renderer
 	authService  *auth.Service
+	dispatcher   *dispatch.Dispatcher
 	secureCookie bool
 }
 
-// NewHandler returns a Handler backed by the given auth service and renderer.
-func NewHandler(renderer templates.Renderer, authService *auth.Service, isDevelopment bool) *Handler {
+// NewHandler returns a Handler backed by the given auth service, dispatcher, and renderer.
+func NewHandler(
+	renderer templates.Renderer,
+	authService *auth.Service,
+	isDevelopment bool,
+	dispatcher *dispatch.Dispatcher,
+) *Handler {
 	return &Handler{
 		renderer:     renderer,
 		authService:  authService,
+		dispatcher:   dispatcher,
 		secureCookie: !isDevelopment,
 	}
 }
@@ -92,6 +100,11 @@ func (handler *Handler) Authenticate(writer http.ResponseWriter, request *http.R
 		Secure:   handler.secureCookie,
 		SameSite: http.SameSiteStrictMode,
 	})
+
+	// TODO: remove - test job to verify dispatch mechanism
+	if err := handler.dispatcher.Dispatch(dispatch.AuthLogin, username); err != nil {
+		log.Printf("wired: authenticate: dispatch: %v", err)
+	}
 
 	http.Redirect(writer, request, "/wired/me", http.StatusSeeOther)
 }

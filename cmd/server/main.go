@@ -11,6 +11,8 @@ import (
 	"meryl.moe/internal"
 	"meryl.moe/internal/config"
 	"meryl.moe/internal/platform/db"
+	"meryl.moe/internal/platform/dispatch"
+	"meryl.moe/internal/platform/worker"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
 		log.Fatal("Failed to load config:", err)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(configuration.DB.Path), 0o755); err != nil {
+	if err = os.MkdirAll(filepath.Dir(configuration.DB.Path), 0o755); err != nil {
 		log.Fatalf("create database directory: %v", err)
 	}
 
@@ -30,14 +32,15 @@ func main() {
 
 	defer database.Close()
 
-	server := internal.NewServer(configuration, database)
+	runner := worker.NewRegistrar(database).JobRunner()
+	server := internal.NewServer(configuration, database, dispatch.New(runner))
 
 	if err := server.Initialize(); err != nil {
 		log.Fatal("Failed to initialize server:", err)
 	}
 
 	addr := fmt.Sprintf("%s:%d", configuration.Server.Host, configuration.Server.Port)
-	if err := server.Start(addr); err != nil {
+	if err := server.Start(addr, runner); err != nil {
 		log.Fatal("Server failed:", err)
 	}
 }
