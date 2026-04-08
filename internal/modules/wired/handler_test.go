@@ -14,6 +14,7 @@ import (
 	"meryl.moe/internal/modules/wired"
 	"meryl.moe/internal/platform/auth"
 	"meryl.moe/internal/platform/db"
+	"meryl.moe/internal/platform/dispatch"
 )
 
 // mockRenderer captures the last render call for inspection.
@@ -75,7 +76,7 @@ func newTestHandler(t *testing.T, database *sql.DB, renderer *mockRenderer) *wir
 		t.Fatalf("new auth service: %v", err)
 	}
 
-	return wired.NewHandler(renderer, service, false)
+	return wired.NewHandler(renderer, service, false, dispatch.NewNoop())
 }
 
 func TestLogin_GET_RendersForm(t *testing.T) {
