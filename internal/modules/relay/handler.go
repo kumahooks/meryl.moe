@@ -31,6 +31,7 @@ func Routes(handler *Handler, database *sql.DB) func(chi.Router) {
 	return func(router chi.Router) {
 		router.Get("/relay", handler.Index)
 		router.With(middleware.RequireAuth(database)).Post("/relay", handler.Save)
+		router.With(middleware.RequireAuth(database)).Get("/relay/panel", handler.Panel)
 		router.Get("/relay/{id}", handler.View)
 	}
 }
@@ -42,17 +43,31 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 
 	if user, ok := auth.AuthUser(request.Context()); ok {
 		data["User"] = user
-
-		relays, err := handler.service.List(user.ID)
-		if err != nil {
-			log.Printf("relay: index: list: %v", err)
-		} else {
-			data["Relays"] = relays
-		}
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
 		log.Printf("relay: render index: %v", err)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// Panel renders the relay panel items fragment for the authenticated user.
+func (handler *Handler) Panel(writer http.ResponseWriter, request *http.Request) {
+	pageFile := "modules/relay/relay.html"
+	user, _ := auth.AuthUser(request.Context())
+
+	relays, err := handler.service.List(user.ID)
+	if err != nil {
+		log.Printf("relay: panel: list: %v", err)
+		http.Error(writer, "internal server error", http.StatusInternalServerError)
+
+		return
+	}
+
+	data := map[string]any{"Relays": relays}
+
+	if err := handler.renderer.Render(writer, request, pageFile, "relay-panel", data); err != nil {
+		log.Printf("relay: render panel: %v", err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -139,13 +154,6 @@ func (handler *Handler) View(writer http.ResponseWriter, request *http.Request) 
 
 	if user, ok := auth.AuthUser(request.Context()); ok {
 		data["User"] = user
-
-		relays, err := handler.service.List(user.ID)
-		if err != nil {
-			log.Printf("relay: view: list: %v", err)
-		} else {
-			data["Relays"] = relays
-		}
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
