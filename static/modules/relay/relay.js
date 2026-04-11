@@ -233,10 +233,5 @@ function init() {
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('htmx:afterSettle', init);
 
-// TODO: browser back/forward breaks relay in multiple ways:
-// - panel stays open after navigating to a saved relay and going back
-// - clicking outside the panel does not close it
-// - possibly other state (URL, charcount, gutter) is stale on restore
-
 init();
 

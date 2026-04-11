@@ -10,9 +10,12 @@
 
 	<link rel="stylesheet" href="/static/platform/base.css">
 
+	<meta name="htmx-config" content='{"refreshOnHistoryMiss":true}'>
+
 	{{block "page-head" .}}{{end}}
 
 	<script src="/static/vendor/htmx.min.js"></script>
+	<script src="/static/platform/history.js"></script>
 </head>
 
 <body hx-boost="true">
