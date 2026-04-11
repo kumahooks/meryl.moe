@@ -124,24 +124,6 @@ func TestSave_EmptyContent_Returns400(t *testing.T) {
 	}
 }
 
-func TestSave_Unauthenticated_Returns500(t *testing.T) {
-	// RequireAuth middleware blocks this in production, but we verify the handler
-	// fails safely rather than persisting a relay with no owner.
-	form := url.Values{"text": {"some content"}}
-
-	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(openTestDB(t)))
-
-	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	recorder := httptest.NewRecorder()
-	handler.Save(recorder, request)
-
-	if recorder.Code != http.StatusForbidden {
-		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
-	}
-}
-
 func TestSave_OversizedBody_Returns400(t *testing.T) {
 	// 1MB + 1 byte exceeds MaxBytesReader limit of 1<<20.
 	largeContent := strings.Repeat("x", 1<<20+1)

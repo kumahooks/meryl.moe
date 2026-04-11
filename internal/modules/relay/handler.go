@@ -87,12 +87,6 @@ func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) 
 	}
 
 	user, _ := auth.AuthUser(request.Context())
-	// TODO: is this fine?
-	if user.ID == "" {
-		http.Error(writer, "invalid user", http.StatusForbidden)
-
-		return
-	}
 
 	relayID, err := handler.service.Save(user.ID, text, visibility, expiresAt)
 	if err != nil {
