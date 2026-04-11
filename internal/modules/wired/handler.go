@@ -140,7 +140,6 @@ func (handler *Handler) Me(writer http.ResponseWriter, request *http.Request) {
 	data := map[string]any{"Title": "wired/me", "User": user}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
-		// TODO: this render error could be replicated to other renders
 		log.Printf("wired: render me: %v", err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}

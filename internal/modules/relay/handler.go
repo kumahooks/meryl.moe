@@ -52,6 +52,7 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
+		log.Printf("relay: render index: %v", err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -154,6 +155,7 @@ func (handler *Handler) View(writer http.ResponseWriter, request *http.Request) 
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
+		log.Printf("relay: render view: %v", err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }

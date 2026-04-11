@@ -2,6 +2,7 @@
 package bin
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,6 +37,7 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
+		log.Printf("bin: render: %v", err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }
