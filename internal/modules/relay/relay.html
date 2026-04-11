@@ -1,3 +1,20 @@
+{{define "relay-panel-items"}}
+{{if .Relays}}
+	{{range .Relays}}
+	<a href="/relay/{{.ID}}" class="relay-panel-item">
+		<span class="relay-panel-preview">{{.Preview}}</span>
+
+		<span class="relay-panel-meta">
+			<span class="relay-panel-date">{{.Date}}</span>
+			<span class="relay-panel-tag relay-panel-tag--{{.PrivateMode}}">{{.PrivateMode}}</span>
+		</span>
+	</a>
+	{{end}}
+{{else}}
+	<span class="relay-panel-empty">no relays yet</span>
+{{end}}
+{{end}}
+
 {{define "page-content"}}
 <title>{{.Title}}</title>
 
@@ -13,7 +30,12 @@
 		<div class="relay-modeline">
 			{{if .User}}
 			<div class="relay-actions">
-				<button type="button" id="relay-list-btn" class="relay-list-btn">my relays<span class="relay-list-btn-slash">*</span></button>
+				<button type="button" id="relay-list-btn" class="relay-list-btn"
+					hx-get="/relay/panel"
+					hx-target="#relay-panel-items"
+					hx-swap="innerHTML"
+					hx-trigger="open-panel">my relays<span class="relay-list-btn-slash">*</span>
+				</button>
 
 				{{if not .ReadOnly}}
 				<div class="relay-save-form">
@@ -48,22 +70,8 @@
 				<button type="button" id="relay-panel-close" class="relay-panel-close">close</button>
 			</div>
 
-			<div class="relay-panel-items">
-				{{if .Relays}}
-					{{range .Relays}}
-					<a href="/relay/{{.ID}}" class="relay-panel-item">
-						<span class="relay-panel-preview">{{.Preview}}</span>
-
-						<span class="relay-panel-meta">
-							<span class="relay-panel-date">{{.Date}}</span>
-							<span class="relay-panel-tag relay-panel-tag--{{.PrivateMode}}">{{.PrivateMode}}</span>
-						</span>
-					</a>
-					{{end}}
-				{{else}}
-					<span class="relay-panel-empty">no relays yet</span>
-				{{end}}
-			</div>
+			<span class="relay-panel-loading">loading</span>
+			<div id="relay-panel-items" class="relay-panel-items"></div>
 		</div>
 		{{end}}
 

@@ -621,6 +621,35 @@ body {
 	color: #5c5c5c;
 }
 
+.relay-panel-loading {
+	display: none;
+	padding: 1rem;
+	color: #5c5c5c;
+}
+
+.relay-container:has(#relay-list-btn.htmx-request) .relay-panel-loading {
+	display: block;
+}
+
+.relay-container:has(#relay-list-btn.htmx-request) #relay-panel-items {
+	display: none;
+}
+
+.relay-panel-loading::after {
+	content: '...';
+	display: inline-block;
+	overflow: hidden;
+	vertical-align: bottom;
+	width: 0;
+	animation: relay-panel-dots 1.5s steps(3, start) infinite;
+}
+
+@keyframes relay-panel-dots {
+	to {
+		width: 3ch;
+	}
+}
+
 /* --- notfound --- */
 .page-content--notfound {
 	min-height: 100vh;

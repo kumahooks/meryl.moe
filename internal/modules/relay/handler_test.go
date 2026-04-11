@@ -80,6 +80,96 @@ func TestIndex_RendererError_Returns500(t *testing.T) {
 	}
 }
 
+func TestPanel_WithRelays_RendersRelays(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service := relay.NewService(database)
+	if _, err := service.Save(userID, "hello wired", relay.PrivateModeLink, futureExpiry()); err != nil {
+		t.Fatalf("seed relay: %v", err)
+	}
+
+	renderer := &mockRenderer{}
+	handler := relay.NewHandler(renderer, service)
+
+	request := httptest.NewRequest(http.MethodGet, "/relay/panel", nil)
+	request.Header.Set("HX-Request", "true")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Panel(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+
+	dataMap, ok := renderer.lastData.(map[string]any)
+	if !ok {
+		t.Fatal("render data is not map[string]any")
+	}
+
+	relays, ok := dataMap["Relays"].([]relay.RelayListItem)
+	if !ok {
+		t.Fatal("Relays key missing or wrong type")
+	}
+
+	if len(relays) != 1 {
+		t.Errorf("relay count: got %d, want 1", len(relays))
+	}
+}
+
+func TestPanel_WithNoRelays_RendersEmptyList(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	renderer := &mockRenderer{}
+	handler := relay.NewHandler(renderer, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodGet, "/relay/panel", nil)
+	request.Header.Set("HX-Request", "true")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Panel(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+
+	dataMap, ok := renderer.lastData.(map[string]any)
+	if !ok {
+		t.Fatal("render data is not map[string]any")
+	}
+
+	relays, ok := dataMap["Relays"].([]relay.RelayListItem)
+	if !ok {
+		t.Fatal("Relays key missing or wrong type")
+	}
+
+	if len(relays) != 0 {
+		t.Errorf("relay count: got %d, want 0", len(relays))
+	}
+}
+
+func TestPanel_RendererError_Returns500(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	renderer := &mockRenderer{err: errors.New("template failure")}
+	handler := relay.NewHandler(renderer, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodGet, "/relay/panel", nil)
+	request.Header.Set("HX-Request", "true")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Panel(recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
+	}
+}
+
 func TestSave_ValidContent_ReturnsLinkFragment(t *testing.T) {
 	form := url.Values{"text": {"hello, wired"}}
 

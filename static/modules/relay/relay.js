@@ -6,6 +6,7 @@ class RelayEditor {
 	#dragCounter = 0;
 	#saveDialog = null;
 	#panel = null;
+	#listBtn = null;
 	#panelBackdrop = null;
 
 	#textarea;
@@ -22,6 +23,7 @@ class RelayEditor {
 		this.#dialogFilename = root.querySelector('.relay-dialog-filename');
 		this.#saveDialog = root.querySelector('#relay-save-dialog');
 		this.#panel = root.querySelector('#relay-panel');
+		this.#listBtn = root.querySelector('#relay-list-btn');
 		this.#panelBackdrop = root.querySelector('#relay-panel-backdrop');
 
 		this.#charcount.textContent = this.#textarea.value.length;
@@ -114,12 +116,18 @@ class RelayEditor {
 		this.#textarea.focus();
 	}
 
-	// TODO: this does not actually update the relays list as it receives them
-	// from the content rendering itself
-	// it's technically not a good practice to do this way...
 	#togglePanel() {
-		const isOpen = this.#panel.classList.toggle('relay-panel--open');
-		this.#panelBackdrop?.classList.toggle('relay-panel-backdrop--visible', isOpen);
+		if (this.#panel.classList.contains('relay-panel--open')) {
+			this.#closePanel();
+		} else {
+			this.#revealPanel();
+			this.#listBtn.dispatchEvent(new Event('open-panel'));
+		}
+	}
+
+	#revealPanel() {
+		this.#panel.classList.add('relay-panel--open');
+		this.#panelBackdrop?.classList.add('relay-panel-backdrop--visible');
 	}
 
 	#closePanel() {
@@ -131,7 +139,7 @@ class RelayEditor {
 		this.#textarea.focus();
 		this.#textarea.select();
 
-		// This is deprecated, but is there even an alternative?
+		// TODO: This is deprecated, but is there even an alternative?
 		document.execCommand('insertText', false, this.#pendingFileContent);
 
 		this.#hideDialog();
@@ -197,7 +205,14 @@ class RelayEditor {
 			const saveCancelBtn = this.#saveDialog.querySelector('.relay-dialog-btn--cancel');
 
 			saveTriggerBtn.addEventListener('click', () => this.#showSaveDialog());
+
 			saveConfirmBtn.addEventListener('click', () => this.#hideSaveDialog());
+			saveConfirmBtn.addEventListener('htmx:afterRequest', event => {
+				if (event.detail.successful && this.#panel.classList.contains('relay-panel--open')) {
+					this.#listBtn.dispatchEvent(new Event('open-panel'));
+				}
+			});
+
 			saveCancelBtn.addEventListener('click', () => this.#hideSaveDialog());
 
 			this.#saveDialog.addEventListener('click', event => {
@@ -211,10 +226,9 @@ class RelayEditor {
 		}
 
 		if (this.#panel) {
-			const listBtn = container.querySelector('#relay-list-btn');
 			const panelCloseBtn = this.#panel.querySelector('#relay-panel-close');
 
-			listBtn?.addEventListener('click', () => this.#togglePanel());
+			this.#listBtn?.addEventListener('click', () => this.#togglePanel());
 			panelCloseBtn?.addEventListener('click', () => this.#closePanel());
 
 			this.#panelBackdrop?.addEventListener('click', () => this.#closePanel());
