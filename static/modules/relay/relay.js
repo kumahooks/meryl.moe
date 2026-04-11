@@ -5,8 +5,6 @@ class RelayEditor {
 	#pendingFileContent = null;
 	#dragCounter = 0;
 	#saveDialog = null;
-	#panel = null;
-	#panelBackdrop = null;
 
 	#textarea;
 	#gutter;
@@ -21,8 +19,6 @@ class RelayEditor {
 		this.#dialogOverlay = root.querySelector('.relay-dialog-overlay');
 		this.#dialogFilename = root.querySelector('.relay-dialog-filename');
 		this.#saveDialog = root.querySelector('#relay-save-dialog');
-		this.#panel = root.querySelector('#relay-panel');
-		this.#panelBackdrop = root.querySelector('#relay-panel-backdrop');
 
 		this.#charcount.textContent = this.#textarea.value.length;
 		this.#restoreFromUrl();
@@ -114,24 +110,11 @@ class RelayEditor {
 		this.#textarea.focus();
 	}
 
-	// TODO: this does not actually update the relays list as it receives them
-	// from the content rendering itself
-	// it's technically not a good practice to do this way...
-	#togglePanel() {
-		const isOpen = this.#panel.classList.toggle('relay-panel--open');
-		this.#panelBackdrop?.classList.toggle('relay-panel-backdrop--visible', isOpen);
-	}
-
-	#closePanel() {
-		this.#panel.classList.remove('relay-panel--open');
-		this.#panelBackdrop?.classList.remove('relay-panel-backdrop--visible');
-	}
-
 	#confirmLoad() {
 		this.#textarea.focus();
 		this.#textarea.select();
 
-		// This is deprecated, but is there even an alternative?
+		// TODO: This is deprecated, but is there even an alternative?
 		document.execCommand('insertText', false, this.#pendingFileContent);
 
 		this.#hideDialog();
@@ -191,6 +174,12 @@ class RelayEditor {
 			if (event.key === 'Escape') this.#hideDialog();
 		});
 
+		container.addEventListener('click', event => {
+			if (event.target.closest('.relay-panel-close, .relay-panel-backdrop')) {
+				document.getElementById('relay-panel')?.classList.remove('relay-panel--open');
+			}
+		});
+
 		const saveTriggerBtn = container.querySelector('#relay-save-btn');
 		if (saveTriggerBtn) {
 			const saveConfirmBtn = this.#saveDialog.querySelector('.relay-dialog-btn--confirm');
@@ -198,6 +187,11 @@ class RelayEditor {
 
 			saveTriggerBtn.addEventListener('click', () => this.#showSaveDialog());
 			saveConfirmBtn.addEventListener('click', () => this.#hideSaveDialog());
+			saveConfirmBtn.addEventListener('htmx:afterRequest', event => {
+				if (event.detail.successful && document.getElementById('relay-panel')?.classList.contains('relay-panel--open')) {
+					container.querySelector('.relay-list-btn')?.click();
+				}
+			});
 			saveCancelBtn.addEventListener('click', () => this.#hideSaveDialog());
 
 			this.#saveDialog.addEventListener('click', event => {
@@ -210,15 +204,6 @@ class RelayEditor {
 			});
 		}
 
-		if (this.#panel) {
-			const listBtn = container.querySelector('#relay-list-btn');
-			const panelCloseBtn = this.#panel.querySelector('#relay-panel-close');
-
-			listBtn?.addEventListener('click', () => this.#togglePanel());
-			panelCloseBtn?.addEventListener('click', () => this.#closePanel());
-
-			this.#panelBackdrop?.addEventListener('click', () => this.#closePanel());
-		}
 	}
 }
 

@@ -514,7 +514,7 @@ body {
 	z-index: 49;
 }
 
-.relay-panel-backdrop--visible {
+.relay-container:has(.relay-panel--open) .relay-panel-backdrop {
 	display: block;
 }
 
