@@ -194,7 +194,12 @@ class RelayEditor {
 			});
 
 			this.#saveDialog.addEventListener('keydown', event => {
-				if (event.key === 'Enter') saveConfirmBtn.click();
+				if (event.key !== 'Enter') return;
+
+				const focused = document.activeElement;
+				if (focused && focused.tagName === 'BUTTON' && this.#saveDialog.contains(focused)) return;
+
+				saveConfirmBtn.click();
 			});
 
 			this.#saveDialog.addEventListener('close', () => {

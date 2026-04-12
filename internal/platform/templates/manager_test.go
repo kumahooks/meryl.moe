@@ -91,7 +91,7 @@ func TestRender_HTMXFragment_RendersFragmentOnly(t *testing.T) {
 	}
 }
 
-func TestRender_HTMXBoosted_RendersFullPage(t *testing.T) {
+func TestRender_HTMXBoosted_RendersFragmentOnly(t *testing.T) {
 	manager, err := templates.NewManager(false, testFS)
 	if err != nil {
 		t.Fatalf("NewManager: %v", err)
@@ -113,8 +113,12 @@ func TestRender_HTMXBoosted_RendersFullPage(t *testing.T) {
 	}
 
 	body := recorder.Body.String()
-	if !strings.Contains(body, "base:") {
-		t.Errorf("expected full page render for boosted request, got: %q", body)
+	if strings.Contains(body, "base:") {
+		t.Errorf("expected fragment only for boosted request, got full page: %q", body)
+	}
+
+	if !strings.Contains(body, "content:hello") {
+		t.Errorf("expected fragment content in body, got: %q", body)
 	}
 }
 

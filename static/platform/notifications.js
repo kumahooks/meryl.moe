@@ -26,11 +26,15 @@ class ToastService {
 		}
 
 		const element = this.#build(detail);
+		if (!element) return;
+
 		container.prepend(element);
 
 		this.#notifications.unshift(element);
 
+		const activeElement = document.activeElement;
 		element.show();
+		activeElement?.focus();
 
 		requestAnimationFrame(() => {
 			requestAnimationFrame(() => element.classList.add('notification--visible'));
@@ -58,7 +62,14 @@ class ToastService {
 
 		element.classList.remove('notification--visible');
 
-		const remove = () => this.#removeElement(element);
+		let removed = false;
+		const remove = () => {
+			if (removed) return;
+
+			removed = true;
+			this.#removeElement(element);
+		};
+
 		element.addEventListener('transitionend', remove, { once: true });
 		setTimeout(remove, 500);
 	}
