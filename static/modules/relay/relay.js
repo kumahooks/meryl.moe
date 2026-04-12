@@ -9,14 +9,14 @@ class RelayEditor {
 	#textarea;
 	#gutter;
 	#charcount;
-	#dialogOverlay;
+	#loadDialog;
 	#dialogFilename;
 
 	constructor(root) {
 		this.#textarea = root.querySelector('#relay-input');
 		this.#gutter = root.querySelector('#relay-gutter');
 		this.#charcount = root.querySelector('#relay-charcount');
-		this.#dialogOverlay = root.querySelector('.relay-dialog-overlay');
+		this.#loadDialog = root.querySelector('#relay-load-dialog');
 		this.#dialogFilename = root.querySelector('.relay-dialog-filename');
 		this.#saveDialog = root.querySelector('#relay-save-dialog');
 
@@ -88,26 +88,21 @@ class RelayEditor {
 	#showDialog(filename, content) {
 		this.#pendingFileContent = content;
 		this.#dialogFilename.textContent = filename;
-		this.#dialogOverlay.classList.add('relay-dialog-overlay--visible');
-		this.#dialogOverlay.querySelector('.relay-dialog-btn--confirm').focus();
+		this.#loadDialog.showModal();
+		this.#loadDialog.querySelector('.relay-dialog-btn--confirm').focus();
 	}
 
 	#hideDialog() {
-		this.#dialogOverlay.classList.remove('relay-dialog-overlay--visible');
-		this.#pendingFileContent = null;
-		this.#textarea.focus();
+		this.#loadDialog.close();
 	}
 
-	// TODO: I think this should actually be a generic component instead of localized
-	// as I believe other screens will also have a dialog like this
 	#showSaveDialog() {
-		this.#saveDialog.classList.add('relay-dialog-overlay--visible');
+		this.#saveDialog.showModal();
 		this.#saveDialog.querySelector('.relay-dialog-btn--confirm').focus();
 	}
 
 	#hideSaveDialog() {
-		this.#saveDialog.classList.remove('relay-dialog-overlay--visible');
-		this.#textarea.focus();
+		this.#saveDialog.close();
 	}
 
 	#confirmLoad() {
@@ -162,21 +157,26 @@ class RelayEditor {
 			reader.readAsText(file);
 		});
 
-		this.#dialogOverlay.querySelector('.relay-dialog-btn--confirm').addEventListener('click', () => this.#confirmLoad());
-		this.#dialogOverlay.querySelector('.relay-dialog-btn--cancel').addEventListener('click', () => this.#hideDialog());
+		this.#loadDialog.querySelector('.relay-dialog-btn--confirm').addEventListener('click', () => this.#confirmLoad());
+		this.#loadDialog.querySelector('.relay-dialog-btn--cancel').addEventListener('click', () => this.#hideDialog());
 
-		this.#dialogOverlay.addEventListener('click', event => {
-			if (event.target === this.#dialogOverlay) this.#hideDialog();
+		this.#loadDialog.addEventListener('click', event => {
+			if (event.target === this.#loadDialog) this.#hideDialog();
 		});
 
-		this.#dialogOverlay.addEventListener('keydown', event => {
+		this.#loadDialog.addEventListener('keydown', event => {
 			if (event.key === 'Enter') this.#confirmLoad();
-			if (event.key === 'Escape') this.#hideDialog();
+		});
+
+		this.#loadDialog.addEventListener('close', () => {
+			this.#pendingFileContent = null;
+			this.#textarea.focus();
 		});
 
 		container.addEventListener('click', event => {
 			if (event.target.closest('.relay-panel-close, .relay-panel-backdrop')) {
-				document.getElementById('relay-panel')?.classList.remove('relay-panel--open');
+				const panel = document.getElementById('relay-panel');
+				if (panel) panel.outerHTML = '<div id="relay-panel" class="relay-panel"></div>';
 			}
 		});
 
@@ -187,11 +187,6 @@ class RelayEditor {
 
 			saveTriggerBtn.addEventListener('click', () => this.#showSaveDialog());
 			saveConfirmBtn.addEventListener('click', () => this.#hideSaveDialog());
-			saveConfirmBtn.addEventListener('htmx:afterRequest', event => {
-				if (event.detail.successful && document.getElementById('relay-panel')?.classList.contains('relay-panel--open')) {
-					container.querySelector('.relay-list-btn')?.click();
-				}
-			});
 			saveCancelBtn.addEventListener('click', () => this.#hideSaveDialog());
 
 			this.#saveDialog.addEventListener('click', event => {
@@ -200,10 +195,12 @@ class RelayEditor {
 
 			this.#saveDialog.addEventListener('keydown', event => {
 				if (event.key === 'Enter') saveConfirmBtn.click();
-				if (event.key === 'Escape') this.#hideSaveDialog();
+			});
+
+			this.#saveDialog.addEventListener('close', () => {
+				this.#textarea.focus();
 			});
 		}
-
 	}
 }
 

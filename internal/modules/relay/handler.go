@@ -4,7 +4,6 @@ package relay
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -110,13 +109,13 @@ func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	relayURL := "/relay/" + relayID
-	fmt.Fprintf(
-		writer,
-		`<a href="%s" target="_blank" rel="noopener noreferrer" class="relay-link">%s</a>`,
-		relayURL,
-		relayURL,
-	)
+	pageFile := "modules/relay/relay.html"
+	data := map[string]any{"RelayID": relayID}
+
+	if err := handler.renderer.Render(writer, request, pageFile, "relay-save-result", data); err != nil {
+		log.Printf("relay: render save result: %v", err)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // View loads a saved relay and renders the editor pre-populated with its content.

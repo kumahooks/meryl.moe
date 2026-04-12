@@ -1,3 +1,7 @@
+{{define "relay-save-result"}}
+<a href="/relay/{{.RelayID}}" target="_blank" rel="noopener noreferrer" class="relay-link">/relay/{{.RelayID}}</a>
+{{end}}
+
 {{define "relay-panel"}}
 <div id="relay-panel" class="relay-panel relay-panel--open">
 	<div class="relay-panel-header">
@@ -33,7 +37,15 @@
 	<div class="relay-container">
 		<div class="relay-editor">
 			<div class="relay-gutter" id="relay-gutter"></div>
-			<textarea id="relay-input" name="text" class="relay-textarea" placeholder="type something to share..." spellcheck="false" autocomplete="off"{{if .ReadOnly}} readonly{{end}}>{{.Content}}</textarea>
+
+			<textarea
+				id="relay-input"
+				name="text"
+				class="relay-textarea"
+				placeholder="type something to share..."
+				spellcheck="false"
+				autocomplete="off"{{if .ReadOnly}} readonly{{end}}
+			>{{.Content}}</textarea>
 		</div>
 
 		<div class="relay-modeline">
@@ -47,7 +59,10 @@
 
 				{{if not .ReadOnly}}
 				<div class="relay-save-form">
-					<button type="button" id="relay-save-btn" class="relay-save-btn">save<span class="relay-save-btn-slash">*</span></button>
+					<button type="button" id="relay-save-btn" class="relay-save-btn">
+						save<span class="relay-save-btn-slash">*</span>
+					</button>
+
 					<span id="relay-save-result"></span>
 				</div>
 				{{end}}
@@ -57,17 +72,15 @@
 			<span class="relay-stat">chars: <span id="relay-charcount">0</span></span>
 		</div>
 
-		<div class="relay-dialog-overlay">
-			<div class="relay-dialog">
-				<p class="relay-dialog-message">load <span class="relay-dialog-filename"></span>?</p>
-				<p class="relay-dialog-sub">this will overwrite the current text.</p>
+		<dialog id="relay-load-dialog" class="relay-dialog">
+			<p class="relay-dialog-message">load <span class="relay-dialog-filename"></span>?</p>
+			<p class="relay-dialog-sub">this will overwrite the current text.</p>
 
-				<div class="relay-dialog-actions">
-					<button class="relay-dialog-btn relay-dialog-btn--confirm">load</button>
-					<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
-				</div>
+			<div class="relay-dialog-actions">
+				<button class="relay-dialog-btn relay-dialog-btn--confirm">load</button>
+				<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
 			</div>
-		</div>
+		</dialog>
 
 		{{if .User}}
 		<div class="relay-panel-backdrop"></div>
@@ -76,50 +89,52 @@
 		{{end}}
 
 		{{if .User}}
-		<div id="relay-save-dialog" class="relay-dialog-overlay">
-			<div class="relay-dialog">
-				<p class="relay-dialog-message">save relay?</p>
+		<dialog id="relay-save-dialog" class="relay-dialog">
+			<p class="relay-dialog-message">save relay?</p>
 
-				<div class="relay-dialog-options">
-					<fieldset class="relay-dialog-fieldset">
-						<legend class="relay-dialog-legend">visibility</legend>
+			<div class="relay-dialog-options">
+				<fieldset class="relay-dialog-fieldset">
+					<legend class="relay-dialog-legend">visibility</legend>
 
-						<label class="relay-dialog-option">
-							<input type="radio" name="visibility" value="link" checked class="relay-save-option"> anyone with the link
-						</label>
+					<label class="relay-dialog-option">
+						<input type="radio" name="visibility" value="link" checked class="relay-save-option"> anyone with the link
+					</label>
 
-						<label class="relay-dialog-option">
-							<input type="radio" name="visibility" value="user" class="relay-save-option"> only me
-						</label>
-					</fieldset>
+					<label class="relay-dialog-option">
+						<input type="radio" name="visibility" value="user" class="relay-save-option"> only me
+					</label>
+				</fieldset>
 
-					<fieldset class="relay-dialog-fieldset">
-						<legend class="relay-dialog-legend">expiration</legend>
+				<fieldset class="relay-dialog-fieldset">
+					<legend class="relay-dialog-legend">expiration</legend>
 
-						<label class="relay-dialog-option">
-							<input type="radio" name="expire_at" value="1d" checked class="relay-save-option"> 1 day
-						</label>
+					<label class="relay-dialog-option">
+						<input type="radio" name="expire_at" value="1d" checked class="relay-save-option"> 1 day
+					</label>
 
-						<label class="relay-dialog-option">
-							<input type="radio" name="expire_at" value="7d" class="relay-save-option"> 7 days
-						</label>
+					<label class="relay-dialog-option">
+						<input type="radio" name="expire_at" value="7d" class="relay-save-option"> 7 days
+					</label>
 
-						<label class="relay-dialog-option">
-							<input type="radio" name="expire_at" value="30d" class="relay-save-option"> 30 days
-						</label>
-					</fieldset>
-				</div>
-
-				<div class="relay-dialog-actions">
-					<button class="relay-dialog-btn relay-dialog-btn--confirm"
-						hx-post="/relay"
-						hx-include="#relay-input, .relay-save-option:checked"
-						hx-target="#relay-save-result"
-						hx-swap="innerHTML">save</button>
-					<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
-				</div>
+					<label class="relay-dialog-option">
+						<input type="radio" name="expire_at" value="30d" class="relay-save-option"> 30 days
+					</label>
+				</fieldset>
 			</div>
-		</div>
+
+			<div class="relay-dialog-actions">
+				<button class="relay-dialog-btn relay-dialog-btn--confirm"
+					hx-post="/relay"
+					hx-include="#relay-input, .relay-save-option:checked"
+					hx-target="#relay-save-result"
+					hx-swap="innerHTML"
+				>
+					save
+				</button>
+
+				<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
+			</div>
+		</dialog>
 		{{end}}
 	</div>
 </div>

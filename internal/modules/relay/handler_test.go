@@ -15,8 +15,9 @@ import (
 )
 
 type mockRenderer struct {
-	lastData any
-	err      error
+	lastData     any
+	lastFragment string
+	err          error
 }
 
 func (mock *mockRenderer) Render(
@@ -26,6 +27,7 @@ func (mock *mockRenderer) Render(
 	data any,
 ) error {
 	mock.lastData = data
+	mock.lastFragment = fragment
 
 	return mock.err
 }
@@ -170,13 +172,14 @@ func TestPanel_RendererError_Returns500(t *testing.T) {
 	}
 }
 
-func TestSave_ValidContent_ReturnsLinkFragment(t *testing.T) {
+func TestSave_ValidContent_RendersResultFragment(t *testing.T) {
 	form := url.Values{"text": {"hello, wired"}}
 
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
 
-	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+	renderer := &mockRenderer{}
+	handler := relay.NewHandler(renderer, relay.NewService(database))
 
 	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -189,8 +192,18 @@ func TestSave_ValidContent_ReturnsLinkFragment(t *testing.T) {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
 	}
 
-	if body := recorder.Body.String(); !strings.Contains(body, "/relay/") {
-		t.Errorf("response does not contain relay link: %q", body)
+	if renderer.lastFragment != "relay-save-result" {
+		t.Errorf("fragment: got %q, want %q", renderer.lastFragment, "relay-save-result")
+	}
+
+	dataMap, ok := renderer.lastData.(map[string]any)
+	if !ok {
+		t.Fatal("render data is not map[string]any")
+	}
+
+	relayID, ok := dataMap["RelayID"].(string)
+	if !ok || relayID == "" {
+		t.Error("expected non-empty RelayID in render data")
 	}
 }
 
@@ -255,14 +268,15 @@ func TestSave_MalformedBody_Returns400(t *testing.T) {
 	}
 }
 
-func TestSave_HTMLContentInLink_DoesNotEscapeRelayID(t *testing.T) {
-	// Verify the returned anchor href contains the relay ID, not injected content.
+func TestSave_HTMLContent_RelayIDIsNotDerivedFromInput(t *testing.T) {
+	// RelayID is a DB-generated UUID; user input must not appear in it.
 	form := url.Values{"text": {"<script>alert(1)</script>"}}
 
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
 
-	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
+	renderer := &mockRenderer{}
+	handler := relay.NewHandler(renderer, relay.NewService(database))
 
 	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -275,13 +289,14 @@ func TestSave_HTMLContentInLink_DoesNotEscapeRelayID(t *testing.T) {
 		t.Fatalf("status: got %d, want %d", recorder.Code, http.StatusOK)
 	}
 
-	body := recorder.Body.String()
-	if strings.Contains(body, "<script>") {
-		t.Errorf("response contains raw script tag: %q", body)
+	dataMap, ok := renderer.lastData.(map[string]any)
+	if !ok {
+		t.Fatal("render data is not map[string]any")
 	}
 
-	if !strings.Contains(body, `href="/relay/`) {
-		t.Errorf("response does not contain relay href: %q", body)
+	relayID, _ := dataMap["RelayID"].(string)
+	if strings.Contains(relayID, "<script>") {
+		t.Errorf("relay ID contains user input: %q", relayID)
 	}
 }
 
@@ -302,10 +317,6 @@ func TestSave_WithVisibilityPrivate_Saves(t *testing.T) {
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
-	}
-
-	if body := recorder.Body.String(); !strings.Contains(body, "/relay/") {
-		t.Errorf("response does not contain relay link: %q", body)
 	}
 }
 
@@ -386,6 +397,27 @@ func TestSave_InvalidExpireAt_DefaultsTo1d(t *testing.T) {
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	}
+}
+
+func TestSave_RendererError_Returns500(t *testing.T) {
+	form := url.Values{"text": {"hello"}}
+
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	renderer := &mockRenderer{err: errors.New("template failure")}
+	handler := relay.NewHandler(renderer, relay.NewService(database))
+
+	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
+
+	recorder := httptest.NewRecorder()
+	handler.Save(recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
 	}
 }
 
