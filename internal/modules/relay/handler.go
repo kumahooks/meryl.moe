@@ -71,7 +71,7 @@ func (handler *Handler) Panel(writer http.ResponseWriter, request *http.Request)
 	}
 }
 
-// Save stores the submitted text and returns a link fragment pointing to the new relay.
+// Save stores the submitted text and fires a notify event with the relay link.
 func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) {
 	request.Body = http.MaxBytesReader(writer, request.Body, 1<<20)
 	if err := request.ParseForm(); err != nil {
@@ -109,13 +109,14 @@ func (handler *Handler) Save(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	pageFile := "modules/relay/relay.html"
-	data := map[string]any{"RelayID": relayID}
-
-	if err := handler.renderer.Render(writer, request, pageFile, "relay-save-result", data); err != nil {
-		log.Printf("relay: render save result: %v", err)
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
+	writer.Header().
+		Set("HX-Trigger", `{
+			"notify": {
+				"message": "relay saved",
+				"link": "/relay/`+relayID+`",
+				"linkDescription": "open here"
+			}
+		}`)
 }
 
 // View loads a saved relay and renders the editor pre-populated with its content.

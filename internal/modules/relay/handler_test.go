@@ -172,14 +172,13 @@ func TestPanel_RendererError_Returns500(t *testing.T) {
 	}
 }
 
-func TestSave_ValidContent_RendersResultFragment(t *testing.T) {
+func TestSave_ValidContent_SetsHXTrigger(t *testing.T) {
 	form := url.Values{"text": {"hello, wired"}}
 
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
 
-	renderer := &mockRenderer{}
-	handler := relay.NewHandler(renderer, relay.NewService(database))
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
 
 	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -192,18 +191,13 @@ func TestSave_ValidContent_RendersResultFragment(t *testing.T) {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
 	}
 
-	if renderer.lastFragment != "relay-save-result" {
-		t.Errorf("fragment: got %q, want %q", renderer.lastFragment, "relay-save-result")
+	trigger := recorder.Header().Get("HX-Trigger")
+	if !strings.Contains(trigger, `"notify"`) {
+		t.Errorf("HX-Trigger missing notify event: %q", trigger)
 	}
 
-	dataMap, ok := renderer.lastData.(map[string]any)
-	if !ok {
-		t.Fatal("render data is not map[string]any")
-	}
-
-	relayID, ok := dataMap["RelayID"].(string)
-	if !ok || relayID == "" {
-		t.Error("expected non-empty RelayID in render data")
+	if !strings.Contains(trigger, "/relay/") {
+		t.Errorf("HX-Trigger missing relay link: %q", trigger)
 	}
 }
 
@@ -268,15 +262,14 @@ func TestSave_MalformedBody_Returns400(t *testing.T) {
 	}
 }
 
-func TestSave_HTMLContent_RelayIDIsNotDerivedFromInput(t *testing.T) {
-	// RelayID is a DB-generated UUID; user input must not appear in it.
+func TestSave_HTMLContent_RelayLinkIsNotDerivedFromInput(t *testing.T) {
+	// Relay ID is a DB-generated UUID; user input must not appear in the notify link.
 	form := url.Values{"text": {"<script>alert(1)</script>"}}
 
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
 
-	renderer := &mockRenderer{}
-	handler := relay.NewHandler(renderer, relay.NewService(database))
+	handler := relay.NewHandler(&mockRenderer{}, relay.NewService(database))
 
 	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -289,14 +282,9 @@ func TestSave_HTMLContent_RelayIDIsNotDerivedFromInput(t *testing.T) {
 		t.Fatalf("status: got %d, want %d", recorder.Code, http.StatusOK)
 	}
 
-	dataMap, ok := renderer.lastData.(map[string]any)
-	if !ok {
-		t.Fatal("render data is not map[string]any")
-	}
-
-	relayID, _ := dataMap["RelayID"].(string)
-	if strings.Contains(relayID, "<script>") {
-		t.Errorf("relay ID contains user input: %q", relayID)
+	trigger := recorder.Header().Get("HX-Trigger")
+	if strings.Contains(trigger, "<script>") {
+		t.Errorf("HX-Trigger contains user input: %q", trigger)
 	}
 }
 
@@ -397,27 +385,6 @@ func TestSave_InvalidExpireAt_DefaultsTo1d(t *testing.T) {
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
-	}
-}
-
-func TestSave_RendererError_Returns500(t *testing.T) {
-	form := url.Values{"text": {"hello"}}
-
-	database := openTestDB(t)
-	userID := insertTestUser(t, database)
-
-	renderer := &mockRenderer{err: errors.New("template failure")}
-	handler := relay.NewHandler(renderer, relay.NewService(database))
-
-	request := httptest.NewRequest(http.MethodPost, "/relay", strings.NewReader(form.Encode()))
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	request = request.WithContext(auth.WithUser(request.Context(), auth.User{ID: userID, Username: "lain"}))
-
-	recorder := httptest.NewRecorder()
-	handler.Save(recorder, request)
-
-	if recorder.Code != http.StatusInternalServerError {
-		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
 	}
 }
 

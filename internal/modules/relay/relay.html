@@ -1,7 +1,3 @@
-{{define "relay-save-result"}}
-<a href="/relay/{{.RelayID}}" target="_blank" rel="noopener noreferrer" class="relay-link">/relay/{{.RelayID}}</a>
-{{end}}
-
 {{define "relay-panel"}}
 <div id="relay-panel" class="relay-panel relay-panel--open">
 	<div class="relay-panel-header">
@@ -62,8 +58,6 @@
 					<button type="button" id="relay-save-btn" class="relay-save-btn">
 						save<span class="relay-save-btn-slash">*</span>
 					</button>
-
-					<span id="relay-save-result"></span>
 				</div>
 				{{end}}
 			</div>
@@ -126,8 +120,7 @@
 				<button class="relay-dialog-btn relay-dialog-btn--confirm"
 					hx-post="/relay"
 					hx-include="#relay-input, .relay-save-option:checked"
-					hx-target="#relay-save-result"
-					hx-swap="innerHTML"
+					hx-swap="none"
 				>
 					save
 				</button>
