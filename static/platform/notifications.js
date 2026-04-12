@@ -113,6 +113,7 @@ class ToastService {
 
 	#bindEvents() {
 		document.addEventListener('notify', event => this.#push(event.detail));
+		document.addEventListener('htmx:responseError', () => this.#push({ message: 'request failed' }));
 	}
 }
 

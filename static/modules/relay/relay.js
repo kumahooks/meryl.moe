@@ -186,7 +186,7 @@ class RelayEditor {
 			const saveCancelBtn = this.#saveDialog.querySelector('.relay-dialog-btn--cancel');
 
 			saveTriggerBtn.addEventListener('click', () => this.#showSaveDialog());
-			saveConfirmBtn.addEventListener('click', () => this.#hideSaveDialog());
+			saveConfirmBtn.addEventListener('htmx:afterRequest', () => this.#hideSaveDialog());
 			saveCancelBtn.addEventListener('click', () => this.#hideSaveDialog());
 
 			this.#saveDialog.addEventListener('click', event => {
