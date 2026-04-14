@@ -9,9 +9,39 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Open opens (or creates) the SQLite database at path, applies configuration
-// pragmas (WAL mode, foreign keys), and runs schema migrations.
-func Open(path string) (*sql.DB, error) {
+// OpenCore opens (or creates) the core SQLite database at path, applies configuration
+// pragmas (WAL mode, foreign keys), and runs core schema migrations.
+func OpenCore(path string) (*sql.DB, error) {
+	database, err := openAndConfigure(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := migrateCore(database); err != nil {
+		database.Close()
+		return nil, err
+	}
+
+	return database, nil
+}
+
+// OpenWorker opens (or creates) the worker SQLite database at path, applies
+// configuration pragmas, and runs worker schema migrations.
+func OpenWorker(path string) (*sql.DB, error) {
+	database, err := openAndConfigure(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := migrateWorker(database); err != nil {
+		database.Close()
+		return nil, err
+	}
+
+	return database, nil
+}
+
+func openAndConfigure(path string) (*sql.DB, error) {
 	database, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
@@ -32,11 +62,6 @@ func Open(path string) (*sql.DB, error) {
 	}
 
 	log.Printf("database: configured (WAL, foreign keys)")
-
-	if err := migrate(database); err != nil {
-		database.Close()
-		return nil, err
-	}
 
 	return database, nil
 }

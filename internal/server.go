@@ -198,7 +198,7 @@ func (server *Server) initLogging() (io.Closer, error) {
 // Start binds the server to addr and begins serving requests.
 // Blocks until SIGINT or SIGTERM is received, then drains in-flight requests
 // with a 30-second deadline before returning.
-func (server *Server) Start(addr string, workerRunner *worker.JobRunner) error {
+func (server *Server) Start(addr string, workerRunner *worker.JobRunner, workerDatabase *sql.DB) error {
 	log.Printf("Starting server on %s", addr)
 
 	httpServer := &http.Server{
@@ -225,6 +225,7 @@ func (server *Server) Start(addr string, workerRunner *worker.JobRunner) error {
 	case err := <-serverErrors:
 		server.logFile.Close()
 		server.database.Close()
+		workerDatabase.Close()
 
 		return err
 	case <-shutdownContext.Done():
@@ -239,6 +240,7 @@ func (server *Server) Start(addr string, workerRunner *worker.JobRunner) error {
 
 		server.logFile.Close()
 		server.database.Close()
+		workerDatabase.Close()
 
 		return err
 	}

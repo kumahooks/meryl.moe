@@ -1,4 +1,4 @@
-package migrations
+package core
 
 const createRelays = `
 	CREATE TABLE relays (

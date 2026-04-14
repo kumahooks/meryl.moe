@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("create database directory: %v", err)
 	}
 
-	database, err := db.Open(*dbPath)
+	database, err := db.OpenCore(*dbPath)
 	if err != nil {
 		log.Fatalf("open database: %v", err)
 	}

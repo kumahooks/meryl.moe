@@ -1,4 +1,4 @@
-package migrations
+package core
 
 const createUsers = `
 	CREATE TABLE users (

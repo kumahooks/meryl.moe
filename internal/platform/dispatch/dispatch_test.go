@@ -7,15 +7,15 @@ import (
 	"meryl.moe/internal/platform/dispatch"
 )
 
-// mockTriggerer records calls made through it and returns a configured error.
-// It satisfies the unexported triggerer interface in the dispatch package.
-type mockTriggerer struct {
+// mockEnqueuer records calls made through it and returns a configured error.
+// It satisfies the unexported enqueuer interface in the dispatch package.
+type mockEnqueuer struct {
 	lastJobName string
 	lastPayload any
 	err         error
 }
 
-func (mock *mockTriggerer) TriggerJob(jobName string, payload any) error {
+func (mock *mockEnqueuer) Enqueue(jobName string, payload any) error {
 	mock.lastJobName = jobName
 	mock.lastPayload = payload
 
@@ -23,28 +23,28 @@ func (mock *mockTriggerer) TriggerJob(jobName string, payload any) error {
 }
 
 func TestDispatch_ForwardsJobNameAndPayload(t *testing.T) {
-	triggerer := &mockTriggerer{}
-	dispatcher := dispatch.New(triggerer)
+	enqueuer := &mockEnqueuer{}
+	dispatcher := dispatch.New(enqueuer)
 
 	if err := dispatcher.Dispatch("test:job", "mydata"); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
 
-	if triggerer.lastJobName != "test:job" {
-		t.Errorf("job name: got %q, want %q", triggerer.lastJobName, "test:job")
+	if enqueuer.lastJobName != "test:job" {
+		t.Errorf("job name: got %q, want %q", enqueuer.lastJobName, "test:job")
 	}
 
-	if triggerer.lastPayload != "mydata" {
-		t.Errorf("payload: got %v, want %q", triggerer.lastPayload, "mydata")
+	if enqueuer.lastPayload != "mydata" {
+		t.Errorf("payload: got %v, want %q", enqueuer.lastPayload, "mydata")
 	}
 }
 
 func TestDispatch_PropagatesError(t *testing.T) {
-	triggerer := &mockTriggerer{err: errors.New("unknown job")}
-	dispatcher := dispatch.New(triggerer)
+	enqueuer := &mockEnqueuer{err: errors.New("unknown job")}
+	dispatcher := dispatch.New(enqueuer)
 
 	if err := dispatcher.Dispatch("test:unknown", nil); err == nil {
-		t.Error("expected error from triggerer, got nil")
+		t.Error("expected error from enqueuer, got nil")
 	}
 }
 

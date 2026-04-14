@@ -1,4 +1,4 @@
-package migrations
+package core
 
 const createUsersRoles = `
 	CREATE TABLE users_roles (

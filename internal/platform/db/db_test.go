@@ -7,8 +7,8 @@ import (
 	"meryl.moe/internal/platform/db"
 )
 
-func TestOpen_Succeeds(t *testing.T) {
-	database, err := db.Open(":memory:")
+func TestOpenCore_Succeeds(t *testing.T) {
+	database, err := db.OpenCore(":memory:")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -16,8 +16,8 @@ func TestOpen_Succeeds(t *testing.T) {
 	database.Close()
 }
 
-func TestOpen_TablesCreated(t *testing.T) {
-	database, err := db.Open(":memory:")
+func TestOpenCore_TablesCreated(t *testing.T) {
+	database, err := db.OpenCore(":memory:")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -35,8 +35,8 @@ func TestOpen_TablesCreated(t *testing.T) {
 	}
 }
 
-func TestOpen_MigrationsTracked(t *testing.T) {
-	database, err := db.Open(":memory:")
+func TestOpenCore_MigrationsTracked(t *testing.T) {
+	database, err := db.OpenCore(":memory:")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -87,24 +87,23 @@ func TestOpen_MigrationsTracked(t *testing.T) {
 	}
 }
 
-func TestOpen_MigrationIdempotent(t *testing.T) {
+func TestOpenCore_MigrationIdempotent(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "test.db")
 
-	first, err := db.Open(path)
+	first, err := db.OpenCore(path)
 	if err != nil {
 		t.Fatalf("first Open: %v", err)
 	}
 
 	first.Close()
 
-	second, err := db.Open(path)
+	second, err := db.OpenCore(path)
 	if err != nil {
 		t.Fatalf("second Open: %v", err)
 	}
 
 	defer second.Close()
 
-	// Migrations must not be applied twice
 	var count int
 	if err := second.QueryRow("SELECT COUNT(*) FROM schema_migrations").Scan(&count); err != nil {
 		t.Fatalf("count schema_migrations: %v", err)
@@ -115,8 +114,8 @@ func TestOpen_MigrationIdempotent(t *testing.T) {
 	}
 }
 
-func TestOpen_WALMode(t *testing.T) {
-	database, err := db.Open(filepath.Join(t.TempDir(), "test.db"))
+func TestOpenCore_WALMode(t *testing.T) {
+	database, err := db.OpenCore(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -133,8 +132,8 @@ func TestOpen_WALMode(t *testing.T) {
 	}
 }
 
-func TestOpen_ForeignKeysEnabled(t *testing.T) {
-	database, err := db.Open(":memory:")
+func TestOpenCore_ForeignKeysEnabled(t *testing.T) {
+	database, err := db.OpenCore(":memory:")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -152,8 +151,8 @@ func TestOpen_ForeignKeysEnabled(t *testing.T) {
 	}
 }
 
-func TestOpen_SchemaConstraints(t *testing.T) {
-	database, err := db.Open(":memory:")
+func TestOpenCore_SchemaConstraints(t *testing.T) {
+	database, err := db.OpenCore(":memory:")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -196,5 +195,107 @@ func TestOpen_SchemaConstraints(t *testing.T) {
 	)
 	if err != nil {
 		t.Errorf("insert valid relay: %v", err)
+	}
+}
+
+func TestOpenWorker_Succeeds(t *testing.T) {
+	database, err := db.OpenWorker(":memory:")
+	if err != nil {
+		t.Fatalf("OpenWorker: %v", err)
+	}
+
+	database.Close()
+}
+
+func TestOpenWorker_TablesCreated(t *testing.T) {
+	database, err := db.OpenWorker(":memory:")
+	if err != nil {
+		t.Fatalf("OpenWorker: %v", err)
+	}
+
+	defer database.Close()
+
+	for _, table := range []string{"worker_schema_migrations", "job_queue", "job_history", "job_graveyard"} {
+		var name string
+
+		if err := database.QueryRow(
+			"SELECT name FROM sqlite_master WHERE type='table' AND name=?", table,
+		).Scan(&name); err != nil {
+			t.Errorf("table %q not found: %v", table, err)
+		}
+	}
+}
+
+func TestOpenWorker_MigrationsTracked(t *testing.T) {
+	database, err := db.OpenWorker(":memory:")
+	if err != nil {
+		t.Fatalf("OpenWorker: %v", err)
+	}
+
+	defer database.Close()
+
+	rows, err := database.Query("SELECT id, name FROM worker_schema_migrations ORDER BY id")
+	if err != nil {
+		t.Fatalf("query worker_schema_migrations: %v", err)
+	}
+
+	defer rows.Close()
+
+	type record struct {
+		id   int
+		name string
+	}
+
+	var records []record
+	for rows.Next() {
+		var rec record
+		if err := rows.Scan(&rec.id, &rec.name); err != nil {
+			t.Fatalf("scan migration record: %v", err)
+		}
+
+		records = append(records, rec)
+	}
+
+	want := []record{
+		{1, "001_create_job_queue"},
+		{2, "002_create_job_history"},
+		{3, "003_create_job_graveyard"},
+	}
+
+	if len(records) != len(want) {
+		t.Fatalf("worker_schema_migrations: got %d records, want %d", len(records), len(want))
+	}
+
+	for i, rec := range records {
+		if rec.id != want[i].id || rec.name != want[i].name {
+			t.Errorf("migration %d: got {%d, %q}, want {%d, %q}", i, rec.id, rec.name, want[i].id, want[i].name)
+		}
+	}
+}
+
+func TestOpenWorker_MigrationIdempotent(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "worker.db")
+
+	first, err := db.OpenWorker(path)
+	if err != nil {
+		t.Fatalf("first OpenWorker: %v", err)
+	}
+
+	first.Close()
+
+	second, err := db.OpenWorker(path)
+	if err != nil {
+		t.Fatalf("second OpenWorker: %v", err)
+	}
+
+	defer second.Close()
+
+	var count int
+	if err := second.QueryRow("SELECT COUNT(*) FROM worker_schema_migrations").Scan(&count); err != nil {
+		t.Fatalf("count worker_schema_migrations: %v", err)
+	}
+
+	if count != 3 {
+		t.Errorf("worker_schema_migrations count: got %d, want 3", count)
 	}
 }

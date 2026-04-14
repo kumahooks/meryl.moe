@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"meryl.moe/internal/platform/db"
-	relaywork "meryl.moe/internal/platform/worker/works/relay"
+	relaywork "meryl.moe/internal/platform/worker/jobs/relay"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	database, err := db.Open(":memory:")
+	database, err := db.OpenCore(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}

@@ -24,7 +24,8 @@ type Config struct {
 	}
 
 	DB struct {
-		Path string `envconfig:"DB_PATH" default:"./data/meryl.db"`
+		CorePath   string `envconfig:"DB_PATH" default:"./data/meryl.db"`
+		WorkerPath string `envconfig:"WORKER_DB_PATH" default:"./data/worker.db"`
 	}
 
 	Session struct {

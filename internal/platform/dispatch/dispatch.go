@@ -10,32 +10,32 @@ const (
 	AuthLogin = "auth:login"
 )
 
-type triggerer interface {
-	TriggerJob(jobName string, payload any) error
+type enqueuer interface {
+	Enqueue(jobName string, payload any) error
 }
 
-type noopTriggerer struct{}
+type noopEnqueuer struct{}
 
-func (noopTriggerer) TriggerJob(_ string, _ any) error { return nil }
+func (noopEnqueuer) Enqueue(_ string, _ any) error { return nil }
 
 // NewNoop returns a Dispatcher that discards all dispatched work.
 // Intended for use in tests.
 func NewNoop() *Dispatcher {
-	return New(noopTriggerer{})
+	return New(noopEnqueuer{})
 }
 
 // Dispatcher dispatches work to the background job runner.
 type Dispatcher struct {
-	runner triggerer
+	runner enqueuer
 }
 
 // New returns a Dispatcher backed by the given runner.
-func New(runner triggerer) *Dispatcher {
+func New(runner enqueuer) *Dispatcher {
 	return &Dispatcher{runner: runner}
 }
 
-// Dispatch triggers a named job asynchronously.
+// Dispatch enqueues a named job for asynchronous execution.
 // Returns an error if the name is not a registered job.
 func (dispatcher *Dispatcher) Dispatch(jobName string, payload any) error {
-	return dispatcher.runner.TriggerJob(jobName, payload)
+	return dispatcher.runner.Enqueue(jobName, payload)
 }
