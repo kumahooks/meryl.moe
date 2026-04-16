@@ -1,4 +1,14 @@
 /* --- global --- */
+html {
+	font-size: clamp(12px, 0.3vw + 9.4px, 14px);
+}
+
+@media (min-width: 2000px) {
+	html {
+		font-size: clamp(14px, 0.4vw + 6.4px, 16px);
+	}
+}
+
 * {
 	margin: 0;
 	padding: 0;
@@ -18,7 +28,7 @@ body {
 /* --- navbar --- */
 .navbar {
 	font-family: monospace;
-	font-size: 14px;
+	font-size: 1rem;
 	padding: 6px 12px;
 	border-bottom: 1px solid #2a2a2a;
 	background: #0d0d0d;
@@ -157,7 +167,7 @@ dialog.notification--visible {
 	border-radius: 6px;
 	padding: 3px 6px;
 	font-family: monospace;
-	font-size: 15px;
+	font-size: 1.07rem;
 }
 
 .terminal-card .line {
@@ -219,7 +229,7 @@ dialog.notification--visible {
 	padding: 2rem;
 	margin: 0 auto;
 	font-family: monospace;
-	font-size: 14px;
+	font-size: 1rem;
 	color: #b0a482;
 	max-width: 600px;
 	/* TODO: we still need to define how will the content look like */
@@ -244,7 +254,7 @@ dialog.notification--visible {
 	align-items: center;
 	gap: 0.6rem;
 	font-family: monospace;
-	font-size: 14px;
+	font-size: 1rem;
 }
 
 .home-username {
@@ -349,7 +359,7 @@ dialog.notification--visible {
 	width: calc(4ch + 1.75rem);
 	background: #000;
 	font-family: monospace;
-	font-size: 14px;
+	font-size: 1rem;
 	line-height: 1.5;
 	padding: 1rem 0.75rem 1rem 1rem;
 	text-align: right;
@@ -374,7 +384,7 @@ dialog.notification--visible {
 	background: #000;
 	color: #b0a482;
 	font-family: monospace;
-	font-size: 14px;
+	font-size: 1rem;
 	line-height: 1.5;
 	padding: 1rem;
 	border: none;
@@ -452,7 +462,7 @@ dialog.relay-dialog::backdrop {
 	padding: 1.5rem 2rem;
 	margin: auto;
 	font-family: monospace;
-	font-size: 13px;
+	font-size: 0.93rem;
 	color: #b0a482;
 	max-width: 420px;
 	width: 90%;
@@ -581,7 +591,7 @@ dialog.relay-dialog::backdrop {
 	display: flex;
 	flex-direction: column;
 	font-family: monospace;
-	font-size: 13px;
+	font-size: 0.93rem;
 	transform: translateX(-100%);
 	transition: transform 0.2s ease;
 	z-index: 50;
@@ -671,6 +681,292 @@ dialog.relay-dialog::backdrop {
 .relay-panel-empty {
 	padding: 1rem;
 	color: #5c5c5c;
+}
+
+/* --- kipple --- */
+.page-content--kipple {
+	max-width: 800px;
+	gap: 2rem;
+}
+
+.kipple-marker {
+	color: #b0a482;
+}
+
+.kipple-drop-zone {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 2.5rem;
+	border: 1px dashed #2a2a2a;
+	transition: border-color 150ms ease;
+}
+
+.kipple-drop-zone:hover {
+	border-color: #5c5c5c;
+}
+
+.kipple-drop-zone--dragover {
+	border-color: #804654;
+}
+
+.kipple-pending {
+	display: none;
+	flex-direction: column;
+}
+
+.kipple-pending--visible {
+	display: flex;
+}
+
+.kipple-pending-header {
+	display: flex;
+	justify-content: space-between;
+	font-size: 11px;
+	color: #5c5c5c;
+	padding-bottom: 0.3rem;
+	border-bottom: 1px solid #2a2a2a;
+}
+
+.kipple-pending-list {
+	list-style: none;
+}
+
+.kipple-pending-item {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.3rem 0;
+	border-bottom: 1px solid #1a1a1a;
+	font-size: 0.93rem;
+}
+
+.kipple-pending-name {
+	flex: 1;
+	min-width: 0;
+	color: #a65e6e;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kipple-pending-size {
+	color: #5c5c5c;
+	font-size: 11px;
+	flex-shrink: 0;
+}
+
+.kipple-pending-footer {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: 0.3rem;
+}
+
+.kipple-pending-btn {
+	all: unset;
+	color: #a65e6e;
+	cursor: pointer;
+}
+
+.kipple-pending-btn:hover {
+	text-decoration: underline;
+}
+
+.kipple-drop-label {
+	color: #5c5c5c;
+	font-size: 0.93rem;
+}
+
+.kipple-drop-or {
+	color: #2a2a2a;
+	font-size: 12px;
+}
+
+.kipple-browse {
+	color: #a65e6e;
+	font-size: 0.93rem;
+	cursor: pointer;
+}
+
+.kipple-browse:hover {
+	text-decoration: underline;
+}
+
+.kipple-file-input {
+	display: none;
+}
+
+.kipple-quota {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.kipple-quota-text {
+	font-size: 12px;
+	color: #5c5c5c;
+}
+
+.kipple-quota-used {
+	color: #b0a482;
+}
+
+.kipple-quota-bar {
+	height: 2px;
+	width: 160px;
+	background: #1a1a1a;
+}
+
+.kipple-quota-fill {
+	height: 100%;
+	background: #804654;
+}
+
+.kipple-table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+	font-family: monospace;
+	font-size: 0.93rem;
+	color: #b0a482;
+}
+
+.kipple-th {
+	font-size: 11px;
+	font-weight: normal;
+	color: #5c5c5c;
+	text-align: left;
+	padding: 0 0 0.3rem 0.75rem;
+	border-bottom: 1px solid #2a2a2a;
+}
+
+.kipple-th:first-child {
+	padding-left: 0;
+}
+
+.kipple-th--size {
+	width: calc(8ch + 0.75rem);
+}
+
+.kipple-th--ttl {
+	width: calc(10ch + 0.75rem);
+}
+
+.kipple-th--mode {
+	width: calc(10ch + 0.75rem);
+}
+
+.kipple-th--del {
+	width: 2.5rem;
+}
+
+.kipple-td {
+	padding: 0.4rem 0 0.4rem 0.75rem;
+	border-bottom: 1px solid #1a1a1a;
+	font-size: 11px;
+	color: #5c5c5c;
+}
+
+.kipple-td:first-child {
+	padding-left: 0;
+}
+
+.kipple-td--file {
+	font-size: 0.93rem;
+	overflow: hidden;
+	max-width: 0;
+}
+
+
+.kipple-row.htmx-swapping td {
+	opacity: 0;
+	transition: opacity 200ms ease-out;
+}
+
+.kipple-filename {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: #a65e6e;
+	text-decoration: none;
+}
+
+.kipple-filename:hover {
+	text-decoration: underline;
+}
+
+.kipple-tag {
+	font-size: 11px;
+	padding: 0 0.25rem;
+	border: 1px solid #2a2a2a;
+	color: #5c5c5c;
+}
+
+.kipple-tag--user {
+	color: #804654;
+	border-color: #804654;
+}
+
+.kipple-del {
+	all: unset;
+	color: #a65e6e;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.kipple-del:hover {
+	text-decoration: underline;
+}
+
+.kipple-td--empty {
+	color: #5c5c5c;
+	font-size: 0.93rem;
+}
+
+@media (max-width: 640px) {
+	.kipple-table thead {
+		display: none;
+	}
+
+	.kipple-table,
+	.kipple-table tbody {
+		display: block;
+	}
+
+	.kipple-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		column-gap: 0.75rem;
+		row-gap: 0.2rem;
+		padding: 0.6rem 0;
+		border-bottom: 1px solid #1a1a1a;
+	}
+
+	.kipple-td {
+		display: block;
+		border: none;
+		padding: 0;
+	}
+
+	.kipple-td--file {
+		flex-basis: 100%;
+		max-width: none;
+		overflow: visible;
+	}
+
+	.kipple-filename {
+		white-space: normal;
+		overflow: visible;
+		text-overflow: clip;
+		display: inline;
+	}
+
+	.kipple-td--del {
+		margin-left: auto;
+	}
 }
 
 /* --- notfound --- */

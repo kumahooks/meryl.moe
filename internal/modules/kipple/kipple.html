@@ -1,0 +1,126 @@
+{{define "page-content"}}
+<title>{{.Title}}</title>
+
+{{template "navbar" .}}
+
+<div class="page-content page-content--kipple">
+	<div class="kipple-drop-zone" id="kipple-drop-zone">
+		<span class="kipple-drop-label">drop files here</span>
+
+		<span class="kipple-drop-or">or</span>
+
+		<label class="kipple-browse" for="kipple-file-input">browse<span class="kipple-marker">*</span></label>
+		<input type="file" id="kipple-file-input" class="kipple-file-input" multiple>
+	</div>
+
+	<div class="kipple-pending" id="kipple-pending">
+		<div class="kipple-pending-header">
+			<span class="kipple-pending-count" id="kipple-pending-count"></span>
+			<span class="kipple-pending-total" id="kipple-pending-total"></span>
+		</div>
+
+		<ul class="kipple-pending-list" id="kipple-pending-list"></ul>
+
+		<div class="kipple-pending-footer">
+			<button type="button" class="kipple-pending-btn" id="kipple-upload-btn">upload<span class="kipple-marker">*</span></button>
+		</div>
+	</div>
+
+	<div class="kipple-quota">
+		<span class="kipple-quota-text">
+			<!-- TODO: remove this mock -->
+			<span class="kipple-quota-used">1.24 GB</span> / 3.00 GB
+		</span>
+
+		<div class="kipple-quota-bar">
+			<div class="kipple-quota-fill" style="width: 41%"></div>
+		</div>
+	</div>
+
+	<table class="kipple-table">
+		<thead>
+			<tr>
+				<th class="kipple-th kipple-th--file">file</th>
+				<th class="kipple-th kipple-th--size">size</th>
+				<th class="kipple-th kipple-th--ttl">expiration</th>
+				<th class="kipple-th kipple-th--mode">visibility</th>
+				<th class="kipple-th kipple-th--del">del</th>
+			</tr>
+		</thead>
+
+		<tbody id="kipple-list">
+			<!-- TODO: remove this mock -->
+			<tr class="kipple-row" id="file-abc123">
+				<td class="kipple-td kipple-td--file">
+					<a href="/kipple/abc123" class="kipple-filename">01_lain_wallpaper.png<span class="kipple-marker">*</span></a>
+				</td>
+
+				<td class="kipple-td kipple-td--size">2.4 MB</td>
+				<td class="kipple-td kipple-td--ttl">2d</td>
+				<td class="kipple-td kipple-td--mode"><span class="kipple-tag">link</span></td>
+
+				<td class="kipple-td kipple-td--del">
+					<button class="kipple-del"
+						hx-delete="/kipple/abc123"
+						hx-target="#file-abc123"
+						hx-swap="outerHTML swap:200ms">del<span class="kipple-marker">*</span>
+					</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<!-- TODO: we are reusing the relay-dialog... maybe this should be a generic class :p -->
+	<dialog id="kipple-upload-dialog" class="relay-dialog">
+		<p class="relay-dialog-message">upload <span class="relay-dialog-filename" id="kipple-upload-filename"></span>?</p>
+
+		<div class="relay-dialog-options">
+			<fieldset class="relay-dialog-fieldset">
+				<legend class="relay-dialog-legend">visibility</legend>
+
+				<label class="relay-dialog-option">
+					<input type="radio" name="visibility" value="link" checked class="kipple-upload-option"> anyone with the link
+				</label>
+
+				<label class="relay-dialog-option">
+					<input type="radio" name="visibility" value="user" class="kipple-upload-option"> only me
+				</label>
+			</fieldset>
+
+			<fieldset class="relay-dialog-fieldset">
+				<legend class="relay-dialog-legend">expiration</legend>
+
+				<label class="relay-dialog-option">
+					<input type="radio" name="expire_days" value="1" checked class="kipple-upload-option"> 1 day
+				</label>
+
+				<label class="relay-dialog-option">
+					<input type="radio" name="expire_days" value="7" class="kipple-upload-option"> 7 days
+				</label>
+
+				<label class="relay-dialog-option">
+					<input type="radio" name="expire_days" value="30" class="kipple-upload-option"> 30 days
+				</label>
+			</fieldset>
+
+			<!-- TODO: we will validate here if the user would pass its upload limit -->
+			<!-- we will allow it up to a 50% total limit. There will be a field "pretty please?" to toggle that -->
+		</div>
+
+		<div class="relay-dialog-actions">
+			<!-- TODO: the files are never cleared on upload -->
+			<button id="kipple-upload-confirm" class="relay-dialog-btn relay-dialog-btn--confirm"
+				hx-post="/kipple"
+				hx-encoding="multipart/form-data"
+				hx-swap="none">
+				upload
+			</button>
+
+			<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
+		</div>
+	</dialog>
+</div>
+
+<script type="module" src="/static/modules/kipple/kipple.js"></script>
+{{end}}
+

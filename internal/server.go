@@ -25,6 +25,7 @@ import (
 	"meryl.moe/internal/modules/bin"
 	"meryl.moe/internal/modules/cyberia"
 	"meryl.moe/internal/modules/home"
+	"meryl.moe/internal/modules/kipple"
 	"meryl.moe/internal/modules/logs"
 	"meryl.moe/internal/modules/noise"
 	"meryl.moe/internal/modules/notfound"
@@ -156,6 +157,9 @@ func (server *Server) Initialize() error {
 		server.dispatcher,
 	)
 
+	// File Sharing app module
+	kippleHandler := kipple.NewHandler(templateManager)
+
 	server.RegisterRoutes(
 		home.Routes(homeHandler),
 		logs.Routes(logsHandler),
@@ -166,6 +170,7 @@ func (server *Server) Initialize() error {
 		relay.Routes(relayHandler, server.database),
 		notfound.Routes(notFoundHandler),
 		wired.Routes(wiredHandler, server.database),
+		kipple.Routes(kippleHandler),
 	)
 
 	log.Printf("routes: registered")
