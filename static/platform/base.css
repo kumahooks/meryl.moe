@@ -1,6 +1,6 @@
 /* --- global --- */
 html {
-	font-size: clamp(12px, 0.3vw + 9.4px, 14px);
+	font-size: clamp(12.5px, 0.3vw + 9.4px, 14px);
 }
 
 @media (min-width: 2000px) {
@@ -110,7 +110,7 @@ dialog.notification {
 	background: #111;
 	color: #b0a482;
 	font-family: monospace;
-	font-size: 12px;
+	font-size: 0.875rem;
 	max-width: none;
 	max-height: none;
 	width: 100%;
@@ -413,7 +413,7 @@ dialog.notification--visible {
 .relay-stat {
 	padding: 0 1rem;
 	font-family: monospace;
-	font-size: 12px;
+	font-size: 0.875rem;
 	color: #5c5c5c;
 	margin-left: auto;
 }
@@ -492,7 +492,7 @@ dialog.relay-dialog::backdrop {
 	border: 1px solid #2a2a2a;
 	color: #b0a482;
 	font-family: monospace;
-	font-size: 12px;
+	font-size: 0.875rem;
 	padding: 0.3rem 1rem;
 	cursor: pointer;
 }
@@ -613,7 +613,7 @@ dialog.relay-dialog::backdrop {
 
 .relay-panel-title {
 	color: #b0a482;
-	font-size: 12px;
+	font-size: 0.875rem;
 	letter-spacing: 0.05em;
 }
 
@@ -621,7 +621,7 @@ dialog.relay-dialog::backdrop {
 	all: unset;
 	color: #5c5c5c;
 	cursor: pointer;
-	font-size: 12px;
+	font-size: 0.875rem;
 }
 
 .relay-panel-close:hover {
@@ -663,11 +663,11 @@ dialog.relay-dialog::backdrop {
 
 .relay-panel-date {
 	color: #5c5c5c;
-	font-size: 11px;
+	font-size: 0.8rem;
 }
 
 .relay-panel-tag {
-	font-size: 11px;
+	font-size: 0.8rem;
 	padding: 0 0.25rem;
 	border: 1px solid #2a2a2a;
 	color: #5c5c5c;
@@ -723,7 +723,7 @@ dialog.relay-dialog::backdrop {
 .kipple-pending-header {
 	display: flex;
 	justify-content: space-between;
-	font-size: 11px;
+	font-size: 0.8rem;
 	color: #5c5c5c;
 	padding-bottom: 0.3rem;
 	border-bottom: 1px solid #2a2a2a;
@@ -753,7 +753,7 @@ dialog.relay-dialog::backdrop {
 
 .kipple-pending-size {
 	color: #5c5c5c;
-	font-size: 11px;
+	font-size: 0.8rem;
 	flex-shrink: 0;
 }
 
@@ -780,7 +780,7 @@ dialog.relay-dialog::backdrop {
 
 .kipple-drop-or {
 	color: #2a2a2a;
-	font-size: 12px;
+	font-size: 0.875rem;
 }
 
 .kipple-browse {
@@ -804,7 +804,7 @@ dialog.relay-dialog::backdrop {
 }
 
 .kipple-quota-text {
-	font-size: 12px;
+	font-size: 0.875rem;
 	color: #5c5c5c;
 }
 
@@ -833,7 +833,6 @@ dialog.relay-dialog::backdrop {
 }
 
 .kipple-th {
-	font-size: 11px;
 	font-weight: normal;
 	color: #5c5c5c;
 	text-align: left;
@@ -858,13 +857,12 @@ dialog.relay-dialog::backdrop {
 }
 
 .kipple-th--del {
-	width: 2.5rem;
+	width: 3.0rem;
 }
 
 .kipple-td {
 	padding: 0.4rem 0 0.4rem 0.75rem;
 	border-bottom: 1px solid #1a1a1a;
-	font-size: 11px;
 	color: #5c5c5c;
 }
 
@@ -898,7 +896,7 @@ dialog.relay-dialog::backdrop {
 }
 
 .kipple-tag {
-	font-size: 11px;
+	font-size: 0.8rem;
 	padding: 0 0.25rem;
 	border: 1px solid #2a2a2a;
 	color: #5c5c5c;
