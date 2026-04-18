@@ -19,5 +19,6 @@ func All() []migrations.Migration {
 		{ID: 6, Name: "006_add_relay_private_mode", SQL: addRelayPrivateMode},
 		{ID: 7, Name: "007_add_relay_expire_at", SQL: addRelayExpireAt},
 		{ID: 8, Name: "008_drop_relay_private", SQL: dropRelayPrivate},
+		{ID: 9, Name: "009_create_kipple_files", SQL: createKippleFiles},
 	}
 }

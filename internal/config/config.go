@@ -31,6 +31,12 @@ type Config struct {
 	Session struct {
 		TTL time.Duration `envconfig:"SESSION_TTL" default:"168h"`
 	}
+
+	Kipple struct {
+		Dir string `envconfig:"KIPPLE_DIR" default:"./data/kipple"`
+		// Quota is the per-user storage cap in bytes. Default: 3 GiB (3 * 1024^3).
+		Quota int64 `envconfig:"KIPPLE_QUOTA" default:"3221225472"`
+	}
 }
 
 // Load reads environment variables into a Config using envconfig.

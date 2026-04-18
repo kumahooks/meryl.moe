@@ -158,7 +158,8 @@ func (server *Server) Initialize() error {
 	)
 
 	// File Sharing app module
-	kippleHandler := kipple.NewHandler(templateManager)
+	kippleService := kipple.NewService(server.database, server.config.Kipple.Dir, server.config.Kipple.Quota)
+	kippleHandler := kipple.NewHandler(templateManager, kippleService)
 
 	server.RegisterRoutes(
 		home.Routes(homeHandler),
@@ -170,7 +171,7 @@ func (server *Server) Initialize() error {
 		relay.Routes(relayHandler, server.database),
 		notfound.Routes(notFoundHandler),
 		wired.Routes(wiredHandler, server.database),
-		kipple.Routes(kippleHandler),
+		kipple.Routes(kippleHandler, server.database),
 	)
 
 	log.Printf("routes: registered")
@@ -207,11 +208,11 @@ func (server *Server) Start(addr string, workerRunner *worker.JobRunner, workerD
 	log.Printf("Starting server on %s", addr)
 
 	httpServer := &http.Server{
-		Addr:         addr,
-		Handler:      server.router,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		Addr:              addr,
+		Handler:           server.router,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	shutdownContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
