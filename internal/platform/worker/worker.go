@@ -67,6 +67,7 @@ type JobRunner struct {
 // runs its job immediately, then at every Job.Interval. On-demand jobs
 // (Interval == 0) are executed via the DB queue poll loop.
 // All goroutines exit when ctx is cancelled.
+// TODO: no jobs have any tests yet. We need to test them eventually ;p
 func (jobRunner *JobRunner) Start(ctx context.Context) {
 	log.Printf("worker: initialized (%d job(s))", len(jobRunner.jobs))
 

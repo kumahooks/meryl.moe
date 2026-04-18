@@ -73,6 +73,8 @@ func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
+	// TODO: the quota bar in the UI is blinking with FOUC. We need to initialize it to a
+	// stable initial state first, then fill it with the progress.
 	quota, err := handler.service.GetQuota(user.ID)
 	if err != nil {
 		log.Printf("kipple: list: quota: %v", err)
@@ -126,7 +128,6 @@ func (handler *Handler) CreateUpload(writer http.ResponseWriter, request *http.R
 
 	upload, err := handler.service.CreateUpload(user.ID, filename, uploadLength, visibility, expireAt)
 	if errors.Is(err, ErrQuotaExceeded) {
-		// TODO: maybe we shouldn't reset the upload list when failing here
 		http.Error(writer, "quota exceeded", http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -236,7 +237,6 @@ func (handler *Handler) AppendChunk(writer http.ResponseWriter, request *http.Re
 }
 
 // TerminateUpload handles DELETE /kipple/upload/:id - cancels an in-progress upload.
-// TODO: maybe we shouldn't reset the upload list when running here
 func (handler *Handler) TerminateUpload(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "id")
 	user, _ := auth.AuthUser(request.Context())
@@ -262,13 +262,14 @@ func (handler *Handler) TerminateUpload(writer http.ResponseWriter, request *htt
 }
 
 // Delete handles DELETE /kipple/:id - deletes a completed file.
+// TODO: when deleting a file, it should update the list. Currently when deleting
+// the last file, it won't update the list to "no kiples yet", as the list never updates
 func (handler *Handler) Delete(writer http.ResponseWriter, request *http.Request) {
 	pageFile := "modules/kipple/kipple.html"
 
 	id := chi.URLParam(request, "id")
 	user, _ := auth.AuthUser(request.Context())
 
-	// TODO: validate if this is deleting from db correctly
 	err := handler.service.DeleteFile(id, user.ID)
 	if errors.Is(err, ErrNotFound) {
 		http.NotFound(writer, request)
@@ -365,6 +366,10 @@ func (handler *Handler) Download(writer http.ResponseWriter, request *http.Reque
 			http.Redirect(writer, request, "/kipple", http.StatusFound)
 			return
 		}
+	}
+
+	if err := http.NewResponseController(writer).SetWriteDeadline(time.Now().Add(20 * time.Minute)); err != nil {
+		log.Printf("kipple: download: clear write deadline: %v", err)
 	}
 
 	osFile, err := os.Open(file.Path)
