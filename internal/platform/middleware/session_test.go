@@ -15,6 +15,10 @@ import (
 	"meryl.moe/internal/platform/middleware"
 )
 
+const (
+	testUserID = "a2ccf831-0d18-4d77-b153-18cdc2334586"
+)
+
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
@@ -37,17 +41,16 @@ func insertTestSession(t *testing.T, database *sql.DB, rawToken string, expiresA
 	now := time.Now().Unix()
 
 	// Insert a minimal user first to satisfy the foreign key.
-	userID := "a2ccf831-0d18-4d77-b153-18cdc2334586"
 	if _, err := database.Exec(
 		"INSERT INTO users (id, username, password_hash, updated_at, created_at) VALUES (?, ?, ?, ?, ?)",
-		userID, "lain", "PASSWORD_HASH", now, now,
+		testUserID, "lain", "PASSWORD_HASH", now, now,
 	); err != nil {
 		t.Fatalf("insert test user: %v", err)
 	}
 
 	if _, err := database.Exec(
 		"INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
-		tokenHash, userID, now, expiresAt,
+		tokenHash, testUserID, now, expiresAt,
 	); err != nil {
 		t.Fatalf("insert test session: %v", err)
 	}

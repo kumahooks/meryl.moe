@@ -91,6 +91,8 @@ func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) 
 }
 
 // CreateUpload handles POST /kipple/upload - creates a new tus upload session.
+// TODO: pending files exist for 1 hour. quota does not take into account pending files,
+// which means an user could potentially exhaust the disk with only pending files
 func (handler *Handler) CreateUpload(writer http.ResponseWriter, request *http.Request) {
 	uploadLengthStr := request.Header.Get("Upload-Length")
 	if uploadLengthStr == "" {
@@ -221,8 +223,9 @@ func (handler *Handler) AppendChunk(writer http.ResponseWriter, request *http.Re
 	}
 
 	if errors.Is(err, ErrChecksumMismatch) {
+		// tus spec mandates 460, but 400 is used here since we don't care as this is more idiomatic
 		writer.Header().Set("Upload-Offset", strconv.FormatInt(newOffset, 10))
-		http.Error(writer, "checksum mismatch", 460)
+		http.Error(writer, "checksum mismatch", http.StatusBadRequest)
 		return
 	}
 
