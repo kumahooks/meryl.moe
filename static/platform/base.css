@@ -507,6 +507,11 @@ dialog.relay-dialog::backdrop {
 	outline-offset: 2px;
 }
 
+.relay-dialog-btn.htmx-request {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
 .relay-dialog-options {
 	display: flex;
 	gap: 2rem;
@@ -773,6 +778,10 @@ dialog.relay-dialog::backdrop {
 	text-decoration: underline;
 }
 
+.kipple-pending-btn--hidden {
+	display: none;
+}
+
 .kipple-drop-label {
 	color: #5c5c5c;
 	font-size: 0.93rem;
@@ -813,13 +822,19 @@ dialog.relay-dialog::backdrop {
 }
 
 .kipple-quota-bar {
-	height: 2px;
-	width: 160px;
-	background: #1a1a1a;
+	position: relative;
+	height: 4px;
+	width: 100%;
+	background: #444;
+	border-radius: 2px;
+	overflow: hidden;
 }
 
 .kipple-quota-fill {
-	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 4px;
 	background: #804654;
 }
 
@@ -918,6 +933,11 @@ dialog.relay-dialog::backdrop {
 	text-decoration: underline;
 }
 
+.kipple-del.htmx-request {
+	pointer-events: none;
+	opacity: 0.4;
+}
+
 .kipple-td--empty {
 	color: #5c5c5c;
 	font-size: 0.93rem;
@@ -965,6 +985,62 @@ dialog.relay-dialog::backdrop {
 	.kipple-td--del {
 		margin-left: auto;
 	}
+}
+
+/* --- kipple file page --- */
+.page-content--kipple-file {
+	max-width: 800px;
+	gap: 2rem;
+}
+
+.kipple-file {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.kipple-file-name {
+	font-size: 1.2rem;
+	color: #a65e6e;
+	word-break: break-all;
+}
+
+.kipple-file-size {
+	color: #5c5c5c;
+	font-size: 0.875rem;
+}
+
+.kipple-file-download {
+	all: unset;
+	color: #a65e6e;
+	cursor: pointer;
+	align-self: flex-start;
+}
+
+.kipple-file-download:hover {
+	text-decoration: underline;
+}
+
+.kipple-file-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0;
+}
+
+.kipple-file-row {
+	display: flex;
+	gap: 1.5rem;
+}
+
+.kipple-file-label {
+	color: #5c5c5c;
+	min-width: 100px;
+}
+
+.kipple-file-value {
+	color: #b0a482;
+	margin: 0;
 }
 
 .kipple-gate {

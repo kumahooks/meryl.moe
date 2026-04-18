@@ -1,0 +1,37 @@
+{{define "page-content"}}
+<title>{{.Title}}</title>
+
+{{template "navbar" .}}
+
+<div class="page-content page-content--kipple-file">
+	<div class="kipple-file">
+		<span class="kipple-file-name">{{.File.Filename}}</span>
+		<span class="kipple-file-size">{{.File.Size}}</span>
+
+		<a href="/kipple/{{.File.ID}}/download" class="kipple-file-download" hx-boost="false">download<span class="kipple-marker">*</span></a>
+
+		<dl class="kipple-file-meta">
+			<div class="kipple-file-row">
+				<dt class="kipple-file-label">uploaded</dt>
+				<dd class="kipple-file-value">{{.File.CreatedAt}}</dd>
+			</div>
+
+			<div class="kipple-file-row">
+				<dt class="kipple-file-label">expires in</dt>
+				<dd class="kipple-file-value">{{.File.ExpiresIn}}</dd>
+			</div>
+
+			<div class="kipple-file-row">
+				<dt class="kipple-file-label">visibility</dt>
+				<dd class="kipple-file-value"><span class="kipple-tag kipple-tag--{{.File.Visibility}}">{{.File.Visibility}}</span></dd>
+			</div>
+
+			<div class="kipple-file-row">
+				<dt class="kipple-file-label">uploaded by</dt>
+				<dd class="kipple-file-value">{{.File.UploadedBy}}</dd>
+			</div>
+		</dl>
+	</div>
+</div>
+{{end}}
+

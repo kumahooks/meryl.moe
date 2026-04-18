@@ -43,7 +43,7 @@ func main() {
 
 	defer workerDatabase.Close()
 
-	runner := worker.NewRegistrar(coreDatabase, workerDatabase).JobRunner()
+	runner := worker.NewRegistrar(coreDatabase, workerDatabase, configuration.Kipple.Dir).JobRunner()
 	server := internal.NewServer(configuration, coreDatabase, dispatch.New(runner))
 
 	if err := server.Initialize(); err != nil {

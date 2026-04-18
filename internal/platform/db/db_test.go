@@ -24,7 +24,7 @@ func TestOpenCore_TablesCreated(t *testing.T) {
 
 	defer database.Close()
 
-	for _, table := range []string{"schema_migrations", "users", "sessions", "relays", "roles", "users_roles"} {
+	for _, table := range []string{"schema_migrations", "users", "sessions", "relays", "roles", "users_roles", "kipple_files"} {
 		var name string
 
 		if err := database.QueryRow(
@@ -74,6 +74,7 @@ func TestOpenCore_MigrationsTracked(t *testing.T) {
 		{6, "006_add_relay_private_mode"},
 		{7, "007_add_relay_expire_at"},
 		{8, "008_drop_relay_private"},
+		{9, "009_create_kipple_files"},
 	}
 
 	if len(records) != len(want) {
@@ -109,8 +110,8 @@ func TestOpenCore_MigrationIdempotent(t *testing.T) {
 		t.Fatalf("count schema_migrations: %v", err)
 	}
 
-	if count != 8 {
-		t.Errorf("schema_migrations count: got %d, want 8", count)
+	if count != 9 {
+		t.Errorf("schema_migrations count: got %d, want 9", count)
 	}
 }
 

@@ -101,14 +101,6 @@ func (handler *Handler) Authenticate(writer http.ResponseWriter, request *http.R
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	// TODO: remove this range - dispatches 5 jobs to test retry and graveyard
-	for range 5 {
-		// TODO: remove - test job to verify dispatch mechanism
-		if err := handler.dispatcher.Dispatch(dispatch.AuthLogin, username); err != nil {
-			log.Printf("wired: authenticate: dispatch: %v", err)
-		}
-	}
-
 	http.Redirect(writer, request, "/wired/me", http.StatusSeeOther)
 }
 

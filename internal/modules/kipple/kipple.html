@@ -24,17 +24,17 @@
 
 		<div class="kipple-pending-footer">
 			<button type="button" class="kipple-pending-btn" id="kipple-upload-btn">upload<span class="kipple-marker">*</span></button>
+			<button type="button" class="kipple-pending-btn kipple-pending-btn--hidden" id="kipple-cancel-btn">cancel<span class="kipple-marker">*</span></button>
 		</div>
 	</div>
 
-	<div class="kipple-quota">
+	<div id="kipple-quota" class="kipple-quota">
 		<span class="kipple-quota-text">
-			<!-- TODO: remove this mock -->
-			<span class="kipple-quota-used">1.24 GB</span> / 3.00 GB
+			<span class="kipple-quota-used"></span>
 		</span>
 
 		<div class="kipple-quota-bar">
-			<div class="kipple-quota-fill" style="width: 41%"></div>
+			<div class="kipple-quota-fill" style="width:0%"></div>
 		</div>
 	</div>
 
@@ -49,29 +49,14 @@
 			</tr>
 		</thead>
 
-		<tbody id="kipple-list">
-			<!-- TODO: remove this mock -->
-			<tr class="kipple-row" id="file-abc123">
-				<td class="kipple-td kipple-td--file">
-					<a href="/kipple/abc123" class="kipple-filename">01_lain_wallpaper.png<span class="kipple-marker">*</span></a>
-				</td>
-
-				<td class="kipple-td kipple-td--size">2.4 MB</td>
-				<td class="kipple-td kipple-td--ttl">2d</td>
-				<td class="kipple-td kipple-td--mode"><span class="kipple-tag">link</span></td>
-
-				<td class="kipple-td kipple-td--del">
-					<button class="kipple-del"
-						hx-delete="/kipple/abc123"
-						hx-target="#file-abc123"
-						hx-swap="outerHTML swap:200ms">del<span class="kipple-marker">*</span>
-					</button>
-				</td>
-			</tr>
+		<tbody id="kipple-list-body"
+			hx-get="/kipple/list"
+			hx-trigger="load, kippleUploaded from:document"
+			hx-target="this"
+			hx-swap="innerHTML">
 		</tbody>
 	</table>
 
-	<!-- TODO: we are reusing the relay-dialog... maybe this should be a generic class :p -->
 	<dialog id="kipple-upload-dialog" class="relay-dialog">
 		<p class="relay-dialog-message">upload <span class="relay-dialog-filename" id="kipple-upload-filename"></span>?</p>
 
@@ -103,20 +88,19 @@
 					<input type="radio" name="expire_days" value="30" class="kipple-upload-option"> 30 days
 				</label>
 			</fieldset>
-
-			<!-- TODO: we will validate here if the user would pass its upload limit -->
-			<!-- we will allow it up to a 50% total limit. There will be a field "pretty please?" to toggle that -->
 		</div>
 
 		<div class="relay-dialog-actions">
-			<!-- TODO: the files are never cleared on upload -->
-			<button id="kipple-upload-confirm" class="relay-dialog-btn relay-dialog-btn--confirm"
-				hx-post="/kipple"
-				hx-encoding="multipart/form-data"
-				hx-swap="none">
-				upload
-			</button>
+			<button id="kipple-upload-confirm" class="relay-dialog-btn relay-dialog-btn--confirm">upload</button>
+			<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
+		</div>
+	</dialog>
 
+	<dialog id="kipple-delete-dialog" class="relay-dialog">
+		<p class="relay-dialog-message">delete <span class="relay-dialog-filename" id="kipple-delete-filename"></span>?</p>
+
+		<div class="relay-dialog-actions">
+			<button id="kipple-delete-confirm" class="relay-dialog-btn relay-dialog-btn--confirm">delete</button>
 			<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
 		</div>
 	</dialog>
@@ -141,5 +125,49 @@
 
 <script type="module" src="/static/modules/kipple/kipple.js"></script>
 <script type="module" src="/static/platform/notifications.js"></script>
+{{end}}
+
+{{define "kipple-rows"}}
+{{range .Files}}
+<tr class="kipple-row" id="file-{{.ID}}">
+	<td class="kipple-td kipple-td--file">
+		<a href="/kipple/{{.ID}}" class="kipple-filename" hx-target="#content">{{.Filename}}<span class="kipple-marker">*</span></a>
+	</td>
+
+	<td class="kipple-td kipple-td--size">{{.Size}}</td>
+
+	<td class="kipple-td kipple-td--ttl">{{.ExpiresIn}}</td>
+
+	<td class="kipple-td kipple-td--mode"><span class="kipple-tag kipple-tag--{{.Visibility}}">{{.Visibility}}</span></td>
+
+	<td class="kipple-td kipple-td--del">
+		<button class="kipple-del"
+			hx-delete="/kipple/{{.ID}}"
+			hx-target="#file-{{.ID}}"
+			hx-swap="outerHTML swap:200ms"
+			hx-confirm="delete"
+			data-filename="{{.Filename}}">del<span class="kipple-marker">*</span>
+		</button>
+	</td>
+</tr>
+{{else}}
+<tr>
+	<td class="kipple-td kipple-td--empty" colspan="5">no kipples yet</td>
+</tr>
+{{end}}
+
+{{template "kipple-quota" .}}
+{{end}}
+
+{{define "kipple-quota"}}
+<div id="kipple-quota" hx-swap-oob="true" class="kipple-quota">
+	<span class="kipple-quota-text">
+		<span class="kipple-quota-used">{{.Quota.UsedStr}}</span> / {{.Quota.TotalStr}}
+	</span>
+
+	<div class="kipple-quota-bar">
+		<div class="kipple-quota-fill" {{.Quota.FillStyle}}></div>
+	</div>
+</div>
 {{end}}
 

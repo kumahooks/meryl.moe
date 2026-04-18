@@ -4,10 +4,8 @@ package dispatch
 
 // Job name constants exposed to Dispatch
 const (
-	RelayCleanup = "relay:cleanup"
-
-	// TODO: remove - test job to verify dispatch mechanism
-	AuthLogin = "auth:login"
+	RelayCleanup  = "relay:cleanup"
+	KippleCleanup = "kipple:cleanup"
 )
 
 type enqueuer interface {
