@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"meryl.moe/internal/platform/auth"
 	"meryl.moe/internal/platform/templates"
 )
 
@@ -29,6 +30,10 @@ func Routes(handler *Handler) func(chi.Router) {
 func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request) {
 	pageFile := "modules/kipple/kipple.html"
 	data := map[string]any{"Page": "kipple", "Title": "kipple - meryl.moe"}
+
+	if user, ok := auth.AuthUser(request.Context()); ok {
+		data["User"] = user
+	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
 		log.Printf("kipple: render index: %v", err)

@@ -4,6 +4,7 @@
 {{template "navbar" .}}
 
 <div class="page-content page-content--kipple">
+	{{if .User}}
 	<div class="kipple-drop-zone" id="kipple-drop-zone">
 		<span class="kipple-drop-label">drop files here</span>
 
@@ -119,7 +120,24 @@
 			<button class="relay-dialog-btn relay-dialog-btn--cancel">cancel</button>
 		</div>
 	</dialog>
+	{{else}}
+	<div class="kipple-gate">
+		<div class="terminal-card">
+			<div class="line">
+				<span class="terminal-user">wired</span><span class="terminal-host">@temple</span> <span class="terminal-path">~/kipple</span>
+			</div>
+
+			<div class="line">
+				<span class="terminal-arrow">❯</span> <span class="terminal-cmd">whoami</span>
+			</div>
+
+			<div class="line">unknown</div>
+		</div>
+	</div>
+	{{end}}
 </div>
+
+<img src="/static/assets/gifs/terry.gif" alt="" class="kipple-terry">
 
 <script type="module" src="/static/modules/kipple/kipple.js"></script>
 <script type="module" src="/static/platform/notifications.js"></script>
