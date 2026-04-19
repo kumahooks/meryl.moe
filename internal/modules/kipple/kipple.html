@@ -57,6 +57,8 @@
 		</tbody>
 	</table>
 
+	<div id="kipple-pagination" class="kipple-pagination"></div>
+
 	<dialog id="kipple-upload-dialog" class="relay-dialog">
 		<p class="relay-dialog-message">upload <span class="relay-dialog-filename" id="kipple-upload-filename"></span>?</p>
 
@@ -108,7 +110,7 @@
 	<div class="kipple-gate">
 		<div class="terminal-card">
 			<div class="line">
-				<span class="terminal-user">wired</span><span class="terminal-host">@temple</span> <span class="terminal-path">~/kipple</span>
+				<span class="terminal-user">kuma</span><span class="terminal-host">@kuma</span> <span class="terminal-path">~/kipple</span>
 			</div>
 
 			<div class="line">
@@ -128,25 +130,25 @@
 {{end}}
 
 {{define "kipple-rows"}}
-{{range .Files}}
-<tr class="kipple-row" id="file-{{.ID}}">
+{{range $index, $file := .Files}}
+<tr class="kipple-row" id="file-{{$file.ID}}" style="--i:{{$index}}">
 	<td class="kipple-td kipple-td--file">
-		<a href="/kipple/{{.ID}}" class="kipple-filename" hx-target="#content">{{.Filename}}<span class="kipple-marker">*</span></a>
+		<a href="/kipple/{{$file.ID}}" class="kipple-filename" hx-target="#content">{{$file.Filename}}<span class="kipple-marker">*</span></a>
 	</td>
 
-	<td class="kipple-td kipple-td--size">{{.Size}}</td>
+	<td class="kipple-td kipple-td--size">{{$file.Size}}</td>
 
-	<td class="kipple-td kipple-td--ttl">{{.ExpiresIn}}</td>
+	<td class="kipple-td kipple-td--ttl">{{$file.ExpiresIn}}</td>
 
-	<td class="kipple-td kipple-td--mode"><span class="kipple-tag kipple-tag--{{.Visibility}}">{{.Visibility}}</span></td>
+	<td class="kipple-td kipple-td--mode"><span class="kipple-tag kipple-tag--{{$file.Visibility}}">{{$file.Visibility}}</span></td>
 
 	<td class="kipple-td kipple-td--del">
 		<button class="kipple-del"
-			hx-delete="/kipple/{{.ID}}"
-			hx-target="#file-{{.ID}}"
+			hx-delete="/kipple/{{$file.ID}}"
+			hx-target="#file-{{$file.ID}}"
 			hx-swap="outerHTML swap:200ms"
 			hx-confirm="delete"
-			data-filename="{{.Filename}}">del<span class="kipple-marker">*</span>
+			data-filename="{{$file.Filename}}">del<span class="kipple-marker">*</span>
 		</button>
 	</td>
 </tr>
@@ -157,6 +159,29 @@
 {{end}}
 
 {{template "kipple-quota" .}}
+{{template "kipple-pagination" .}}
+{{end}}
+
+{{define "kipple-pagination"}}
+<div id="kipple-pagination" hx-swap-oob="true" class="kipple-pagination">
+	{{if .PrevPage}}
+	<button class="kipple-page-btn"
+		hx-get="/kipple/list?page={{.PrevPage}}"
+		hx-target="#kipple-list-body"
+		hx-swap="innerHTML"
+	>←
+	</button>
+	{{end}}
+
+	{{if .NextPage}}
+	<button class="kipple-page-btn"
+		hx-get="/kipple/list?page={{.NextPage}}"
+		hx-target="#kipple-list-body"
+		hx-swap="innerHTML"
+	>→
+	</button>
+	{{end}}
+</div>
 {{end}}
 
 {{define "kipple-quota"}}

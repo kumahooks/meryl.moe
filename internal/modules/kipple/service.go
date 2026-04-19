@@ -335,16 +335,20 @@ func (service *Service) GetInfo(id string) (*FileInfo, error) {
 	return info, nil
 }
 
-// List returns all completed, non-expired files for userID, newest first.
-func (service *Service) List(userID string) ([]FileListItem, error) {
+// List returns one page of completed, non-expired files for userID, newest first.
+// hasNext reports whether more files exist beyond this page.
+func (service *Service) List(userID string, page, pageSize int) ([]FileListItem, bool, error) {
+	offset := (page - 1) * pageSize
+
 	rows, err := service.database.Query(
 		`SELECT id, filename, size, expire_at, visibility
 		 FROM kipple_files WHERE user_id = ? AND status = 'complete' AND expire_at > ?
-		 ORDER BY created_at DESC`,
-		userID, time.Now().Unix(),
+		 ORDER BY filename ASC
+		 LIMIT ? OFFSET ?`,
+		userID, time.Now().Unix(), pageSize+1, offset,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("query files: %w", err)
+		return nil, false, fmt.Errorf("query files: %w", err)
 	}
 
 	defer rows.Close()
@@ -357,7 +361,7 @@ func (service *Service) List(userID string) ([]FileListItem, error) {
 		var expireAt int64
 
 		if err := rows.Scan(&item.ID, &item.Filename, &size, &expireAt, &item.Visibility); err != nil {
-			return nil, fmt.Errorf("scan file: %w", err)
+			return nil, false, fmt.Errorf("scan file: %w", err)
 		}
 
 		item.Size = formatBytes(size)
@@ -366,10 +370,15 @@ func (service *Service) List(userID string) ([]FileListItem, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate files: %w", err)
+		return nil, false, fmt.Errorf("iterate files: %w", err)
 	}
 
-	return items, nil
+	hasNext := len(items) > pageSize
+	if hasNext {
+		items = items[:pageSize]
+	}
+
+	return items, hasNext, nil
 }
 
 // GetQuota returns quota display info for the given user.

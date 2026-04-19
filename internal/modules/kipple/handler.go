@@ -19,6 +19,8 @@ import (
 	"meryl.moe/internal/platform/templates"
 )
 
+const listPageSize = 10
+
 // Handler handles requests for the kipple file sharing tool.
 type Handler struct {
 	renderer templates.Renderer
@@ -69,12 +71,19 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 	}
 }
 
-// List handles GET /kipple/list - returns the file list rows and OOB quota update.
+// List handles GET /kipple/list - returns the file list rows, OOB quota, and OOB pagination.
 func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) {
 	pageFile := "modules/kipple/kipple.html"
 	user, _ := auth.AuthUser(request.Context())
 
-	files, err := handler.service.List(user.ID)
+	page := 1
+	if pageStr := request.URL.Query().Get("page"); pageStr != "" {
+		if n, err := strconv.Atoi(pageStr); err == nil && n > 0 {
+			page = n
+		}
+	}
+
+	files, hasNext, err := handler.service.List(user.ID, page, listPageSize)
 	if err != nil {
 		log.Printf("kipple: list: list: %v", err)
 		http.Error(writer, "internal server error", http.StatusInternalServerError)
@@ -88,7 +97,22 @@ func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	data := map[string]any{"Files": files, "Quota": quota}
+	prevPage := 0
+	if page > 1 {
+		prevPage = page - 1
+	}
+
+	nextPage := 0
+	if hasNext {
+		nextPage = page + 1
+	}
+
+	data := map[string]any{
+		"Files":    files,
+		"Quota":    quota,
+		"PrevPage": prevPage,
+		"NextPage": nextPage,
+	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "kipple-rows", data); err != nil {
 		log.Printf("kipple: render list: %v", err)

@@ -754,7 +754,7 @@ func TestService_List_Empty_ReturnsNil(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	items, err := service.List(userID)
+	items, _, err := service.List(userID, 1, 100)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -774,7 +774,7 @@ func TestService_List_ExcludesPendingFiles(t *testing.T) {
 		t.Fatalf("create: %v", err)
 	}
 
-	items, err := service.List(userID)
+	items, _, err := service.List(userID, 1, 100)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -798,7 +798,7 @@ func TestService_List_ExcludesExpiredFiles(t *testing.T) {
 
 	_, _ = service.AppendChunk(upload.ID, userID, 0, bytes.NewReader(content), sha1Header(content))
 
-	items, err := service.List(userID)
+	items, _, err := service.List(userID, 1, 100)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -818,7 +818,7 @@ func TestService_List_OnlyReturnsOwnFiles(t *testing.T) {
 	createCompleteUpload(t, service, userA)
 	createCompleteUpload(t, service, userB)
 
-	items, err := service.List(userA)
+	items, _, err := service.List(userA, 1, 100)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -836,7 +836,7 @@ func TestService_List_SizeAndExpiresInFormatted(t *testing.T) {
 
 	createCompleteUpload(t, service, userID)
 
-	items, err := service.List(userID)
+	items, _, err := service.List(userID, 1, 100)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -851,6 +851,54 @@ func TestService_List_SizeAndExpiresInFormatted(t *testing.T) {
 
 	if items[0].ExpiresIn == "" {
 		t.Error("ExpiresIn must not be empty")
+	}
+}
+
+func TestService_List_Pagination_HasNext(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service, _ := newService(t, database)
+
+	for range 3 {
+		createCompleteUpload(t, service, userID)
+	}
+
+	items, hasNext, err := service.List(userID, 1, 2)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(items) != 2 {
+		t.Errorf("items: got %d, want 2", len(items))
+	}
+
+	if !hasNext {
+		t.Error("hasNext must be true when more items exist beyond page size")
+	}
+}
+
+func TestService_List_Pagination_SecondPage(t *testing.T) {
+	database := openTestDB(t)
+	userID := insertTestUser(t, database)
+
+	service, _ := newService(t, database)
+
+	for range 3 {
+		createCompleteUpload(t, service, userID)
+	}
+
+	items, hasNext, err := service.List(userID, 2, 2)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(items) != 1 {
+		t.Errorf("items: got %d, want 1", len(items))
+	}
+
+	if hasNext {
+		t.Error("hasNext must be false on last page")
 	}
 }
 
@@ -988,7 +1036,7 @@ func TestService_FormatBytes_LargeFile_ShowsGB(t *testing.T) {
 		t.Fatalf("update: %v", err)
 	}
 
-	items, err := service.List(userID)
+	items, _, err := service.List(userID, 1, 100)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
