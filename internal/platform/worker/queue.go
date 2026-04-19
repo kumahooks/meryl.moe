@@ -30,7 +30,7 @@ func (queue *jobQueue) enqueue(name string, payload any) error {
 	if payload != nil {
 		encoded, err := json.Marshal(payload)
 		if err != nil {
-			return fmt.Errorf("marshal payload: %w", err)
+			return fmt.Errorf("[worker] marshal payload: %w", err)
 		}
 
 		serialized := string(encoded)
@@ -47,7 +47,7 @@ func (queue *jobQueue) enqueue(name string, payload any) error {
 		now,
 		now,
 	); err != nil {
-		return fmt.Errorf("insert job: %w", err)
+		return fmt.Errorf("[worker] insert job: %w", err)
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (queue *jobQueue) claimPending(ctx context.Context) ([]jobRecord, error) {
 		time.Now().Unix(),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("claim pending: %w", err)
+		return nil, fmt.Errorf("[worker] claim pending: %w", err)
 	}
 
 	defer rows.Close()
@@ -70,14 +70,14 @@ func (queue *jobQueue) claimPending(ctx context.Context) ([]jobRecord, error) {
 	for rows.Next() {
 		var record jobRecord
 		if err := rows.Scan(&record.id, &record.name, &record.payload, &record.attempts); err != nil {
-			return nil, fmt.Errorf("scan job: %w", err)
+			return nil, fmt.Errorf("[worker] scan job: %w", err)
 		}
 
 		records = append(records, record)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate jobs: %w", err)
+		return nil, fmt.Errorf("[worker] iterate jobs: %w", err)
 	}
 
 	return records, nil
@@ -87,7 +87,7 @@ func (queue *jobQueue) claimPending(ctx context.Context) ([]jobRecord, error) {
 func (queue *jobQueue) complete(record jobRecord, attempts int) error {
 	transaction, err := queue.database.Begin()
 	if err != nil {
-		return fmt.Errorf("begin: %w", err)
+		return fmt.Errorf("[worker] begin: %w", err)
 	}
 
 	if _, err := transaction.Exec(
@@ -95,12 +95,12 @@ func (queue *jobQueue) complete(record jobRecord, attempts int) error {
 		record.id, record.name, record.payload, attempts, time.Now().Unix(),
 	); err != nil {
 		transaction.Rollback()
-		return fmt.Errorf("insert history: %w", err)
+		return fmt.Errorf("[worker] insert history: %w", err)
 	}
 
 	if _, err := transaction.Exec("DELETE FROM job_queue WHERE id = ?", record.id); err != nil {
 		transaction.Rollback()
-		return fmt.Errorf("delete from queue: %w", err)
+		return fmt.Errorf("[worker] delete from queue: %w", err)
 	}
 
 	return transaction.Commit()
@@ -122,7 +122,7 @@ func (queue *jobQueue) retry(id string, attempts int) error {
 func (queue *jobQueue) bury(record jobRecord, attempts int, lastError string) error {
 	transaction, err := queue.database.Begin()
 	if err != nil {
-		return fmt.Errorf("begin: %w", err)
+		return fmt.Errorf("[worker] bury begin: %w", err)
 	}
 
 	if _, err := transaction.Exec(
@@ -130,12 +130,12 @@ func (queue *jobQueue) bury(record jobRecord, attempts int, lastError string) er
 		record.id, record.name, record.payload, attempts, lastError, time.Now().Unix(),
 	); err != nil {
 		transaction.Rollback()
-		return fmt.Errorf("insert graveyard: %w", err)
+		return fmt.Errorf("[worker] insert graveyard: %w", err)
 	}
 
 	if _, err := transaction.Exec("DELETE FROM job_queue WHERE id = ?", record.id); err != nil {
 		transaction.Rollback()
-		return fmt.Errorf("delete from queue: %w", err)
+		return fmt.Errorf("[worker] delete from queue: %w", err)
 	}
 
 	return transaction.Commit()
@@ -149,11 +149,11 @@ func (queue *jobQueue) resetOrphaned(ctx context.Context) {
 		time.Now().Unix(),
 	)
 	if err != nil {
-		log.Printf("worker: queue: reset orphaned: %v", err)
+		log.Printf("[worker] queue: reset orphaned: %v", err)
 		return
 	}
 
 	if affected, _ := result.RowsAffected(); affected > 0 {
-		log.Printf("worker: queue: reset %d orphaned job(s)", affected)
+		log.Printf("[worker] queue: reset %d orphaned job(s)", affected)
 	}
 }

@@ -28,7 +28,7 @@ func runMigrations(database *sql.DB, label string, trackingTable string, migs []
 		)
 	`, trackingTable))
 	if err != nil {
-		return fmt.Errorf("create %s: %w", trackingTable, err)
+		return fmt.Errorf("[database] create %s: %w", trackingTable, err)
 	}
 
 	applied := 0
@@ -38,7 +38,7 @@ func runMigrations(database *sql.DB, label string, trackingTable string, migs []
 		if err := database.QueryRow(
 			fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE id = ?", trackingTable), m.ID,
 		).Scan(&count); err != nil {
-			return fmt.Errorf("%s: check migration %d: %w", label, m.ID, err)
+			return fmt.Errorf("[database] %s: check migration %d: %w", label, m.ID, err)
 		}
 
 		if count > 0 {
@@ -47,12 +47,12 @@ func runMigrations(database *sql.DB, label string, trackingTable string, migs []
 
 		transaction, err := database.Begin()
 		if err != nil {
-			return fmt.Errorf("%s: begin migration %d: %w", label, m.ID, err)
+			return fmt.Errorf("[database] %s: begin migration %d: %w", label, m.ID, err)
 		}
 
 		if _, err := transaction.Exec(m.SQL); err != nil {
 			transaction.Rollback()
-			return fmt.Errorf("%s: run migration %d: %w", label, m.ID, err)
+			return fmt.Errorf("[database] %s: run migration %d: %w", label, m.ID, err)
 		}
 
 		if _, err := transaction.Exec(
@@ -60,21 +60,21 @@ func runMigrations(database *sql.DB, label string, trackingTable string, migs []
 			m.ID, m.Name, time.Now().Unix(),
 		); err != nil {
 			transaction.Rollback()
-			return fmt.Errorf("%s: record migration %d: %w", label, m.ID, err)
+			return fmt.Errorf("[database] %s: record migration %d: %w", label, m.ID, err)
 		}
 
 		if err := transaction.Commit(); err != nil {
-			return fmt.Errorf("%s: commit migration %d: %w", label, m.ID, err)
+			return fmt.Errorf("[database] %s: commit migration %d: %w", label, m.ID, err)
 		}
 
-		log.Printf("database: %s: applied migration %d (%s)", label, m.ID, m.Name)
+		log.Printf("[database] %s: applied migration %d (%s)", label, m.ID, m.Name)
 		applied++
 	}
 
 	if applied == 0 {
-		log.Printf("database: %s: migrations up to date", label)
+		log.Printf("[database] %s: migrations up to date", label)
 	} else {
-		log.Printf("database: %s: %d migration(s) applied", label, applied)
+		log.Printf("[database] %s: %d migration(s) applied", label, applied)
 	}
 
 	return nil

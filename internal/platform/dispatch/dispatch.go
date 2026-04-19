@@ -4,8 +4,9 @@ package dispatch
 
 // Job name constants exposed to Dispatch
 const (
-	RelayCleanup  = "relay:cleanup"
-	KippleCleanup = "kipple:cleanup"
+	RelayCleanup        = "relay:cleanup"
+	KippleCleanup       = "kipple:cleanup"
+	KippleOrphanCleanup = "kipple:orphan_cleanup"
 )
 
 type enqueuer interface {

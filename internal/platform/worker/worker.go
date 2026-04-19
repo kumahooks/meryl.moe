@@ -37,7 +37,7 @@ func newRegistrar() *Registrar {
 // Register appends one or more jobs to the registrar.
 func (registrar *Registrar) Register(jobs ...Job) {
 	for _, job := range jobs {
-		log.Printf("worker: registered: %s", job.Name)
+		log.Printf("[worker] registered: %s to run every %s", job.Name, job.Interval)
 		registrar.jobs = append(registrar.jobs, job)
 	}
 }
@@ -69,7 +69,7 @@ type JobRunner struct {
 // All goroutines exit when ctx is cancelled.
 // TODO: no jobs have any tests yet. We need to test them eventually ;p
 func (jobRunner *JobRunner) Start(ctx context.Context) {
-	log.Printf("worker: initialized (%d job(s))", len(jobRunner.jobs))
+	log.Printf("[worker] initialized (%d job(s))", len(jobRunner.jobs))
 
 	for _, job := range jobRunner.jobs {
 		if job.Interval > 0 {
@@ -86,7 +86,7 @@ func (jobRunner *JobRunner) Start(ctx context.Context) {
 // Returns an error if the name is not registered.
 func (jobRunner *JobRunner) Enqueue(name string, payload any) error {
 	if _, ok := jobRunner.jobMap[name]; !ok {
-		return fmt.Errorf("worker: unknown job: %s", name)
+		return fmt.Errorf("[worker] unknown job: %s", name)
 	}
 
 	return jobRunner.queue.enqueue(name, payload)
@@ -97,7 +97,7 @@ func (jobRunner *JobRunner) Enqueue(name string, payload any) error {
 func (jobRunner *JobRunner) TriggerJob(name string, payload any) error {
 	job, ok := jobRunner.jobMap[name]
 	if !ok {
-		return fmt.Errorf("worker: unknown job: %s", name)
+		return fmt.Errorf("[worker] unknown job: %s", name)
 	}
 
 	go runOnce(context.Background(), job, payload)
@@ -124,7 +124,7 @@ func (jobRunner *JobRunner) pollLoop(ctx context.Context) {
 func (jobRunner *JobRunner) processQueue(ctx context.Context) {
 	records, err := jobRunner.queue.claimPending(ctx)
 	if err != nil {
-		log.Printf("worker: queue: poll: %v", err)
+		log.Printf("[worker] queue: poll: %v", err)
 		return
 	}
 
@@ -136,14 +136,14 @@ func (jobRunner *JobRunner) processQueue(ctx context.Context) {
 func (jobRunner *JobRunner) executeQueued(ctx context.Context, record jobRecord) {
 	job, ok := jobRunner.jobMap[record.name]
 	if !ok {
-		log.Printf("worker: queue: %s: unknown job (id=%s)", record.name, record.id)
+		log.Printf("[worker] queue: %s: unknown job (id=%s)", record.name, record.id)
 
 		if err := jobRunner.queue.bury(
 			record,
 			record.attempts,
 			fmt.Sprintf("unknown job: %s", record.name),
 		); err != nil {
-			log.Printf("worker: queue: %s: bury: %v", record.name, err)
+			log.Printf("[worker] queue: %s: bury: %v", record.name, err)
 		}
 
 		return
@@ -152,10 +152,10 @@ func (jobRunner *JobRunner) executeQueued(ctx context.Context, record jobRecord)
 	var payload any
 	if record.payload != nil {
 		if err := json.Unmarshal([]byte(*record.payload), &payload); err != nil {
-			log.Printf("worker: queue: %s: unmarshal payload: %v (id=%s)", record.name, err, record.id)
+			log.Printf("[worker] queue: %s: unmarshal payload: %v (id=%s)", record.name, err, record.id)
 
 			if err = jobRunner.queue.bury(record, record.attempts, err.Error()); err != nil {
-				log.Printf("worker: queue: %s: bury: %v", record.name, err)
+				log.Printf("[worker] queue: %s: bury: %v", record.name, err)
 			}
 
 			return
@@ -163,35 +163,35 @@ func (jobRunner *JobRunner) executeQueued(ctx context.Context, record jobRecord)
 	}
 
 	newAttempts := record.attempts + 1
-	log.Printf("worker: queue: %s: started (attempt %d/%d)", record.name, newAttempts, maxAttempts)
+	log.Printf("[worker] queue: %s: started (attempt %d/%d)", record.name, newAttempts, maxAttempts)
 
 	start := time.Now()
 
 	runErr := job.Run(ctx, payload)
 	if runErr == nil {
-		log.Printf("worker: queue: %s: done (%s)", record.name, time.Since(start))
+		log.Printf("[worker] queue: %s: done (%s)", record.name, time.Since(start))
 
 		if err := jobRunner.queue.complete(record, newAttempts); err != nil {
-			log.Printf("worker: queue: %s: complete: %v", record.name, err)
+			log.Printf("[worker] queue: %s: complete: %v", record.name, err)
 		}
 
 		return
 	}
 
-	log.Printf("worker: queue: %s: attempt %d failed: %v", record.name, newAttempts, runErr)
+	log.Printf("[worker] queue: %s: attempt %d failed: %v", record.name, newAttempts, runErr)
 
 	if newAttempts >= maxAttempts {
-		log.Printf("worker: queue: %s: max attempts reached, burying (id=%s)", record.name, record.id)
+		log.Printf("[worker] queue: %s: max attempts reached, burying (id=%s)", record.name, record.id)
 
 		if err := jobRunner.queue.bury(record, newAttempts, runErr.Error()); err != nil {
-			log.Printf("worker: queue: %s: bury: %v", record.name, err)
+			log.Printf("[worker] queue: %s: bury: %v", record.name, err)
 		}
 
 		return
 	}
 
 	if err := jobRunner.queue.retry(record.id, newAttempts); err != nil {
-		log.Printf("worker: queue: %s: retry: %v", record.name, err)
+		log.Printf("[worker] queue: %s: retry: %v", record.name, err)
 	}
 }
 
@@ -212,13 +212,13 @@ func runJob(ctx context.Context, job Job) {
 }
 
 func runOnce(ctx context.Context, job Job, payload any) {
-	log.Printf("worker: %s: started", job.Name)
+	log.Printf("[worker] %s: started", job.Name)
 	start := time.Now()
 
 	if err := job.Run(ctx, payload); err != nil {
-		log.Printf("worker: %s: %v", job.Name, err)
+		log.Printf("[worker] %s: %v", job.Name, err)
 		return
 	}
 
-	log.Printf("worker: %s: done (%s)", job.Name, time.Since(start))
+	log.Printf("[worker] %s: done (%s)", job.Name, time.Since(start))
 }

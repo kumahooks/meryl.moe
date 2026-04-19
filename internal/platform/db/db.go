@@ -44,7 +44,7 @@ func OpenWorker(path string) (*sql.DB, error) {
 func openAndConfigure(path string) (*sql.DB, error) {
 	database, err := sql.Open("sqlite", path)
 	if err != nil {
-		return nil, fmt.Errorf("open database: %w", err)
+		return nil, fmt.Errorf("[database] open: %w", err)
 	}
 
 	// TODO: validate if this is fine
@@ -54,14 +54,14 @@ func openAndConfigure(path string) (*sql.DB, error) {
 	// make sure this is fine
 	database.SetMaxOpenConns(1)
 
-	log.Printf("database: opened %s", path)
+	log.Printf("[database] opened %s", path)
 
 	if err := configure(database); err != nil {
 		database.Close()
 		return nil, err
 	}
 
-	log.Printf("database: configured (WAL, foreign keys)")
+	log.Printf("[database] configured (WAL, foreign keys)")
 
 	return database, nil
 }
@@ -81,7 +81,7 @@ func configure(database *sql.DB) error {
 		"PRAGMA foreign_keys=ON",
 	} {
 		if _, err := database.Exec(pragma); err != nil {
-			return fmt.Errorf("configure: %s: %w", pragma, err)
+			return fmt.Errorf("[database] configure: %s: %w", pragma, err)
 		}
 	}
 

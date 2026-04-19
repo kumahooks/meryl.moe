@@ -102,7 +102,6 @@ const godDiskBuffer = 5 * 1024 * 1024 * 1024 // 5 GiB reserved when computing go
 // effectiveQuota returns the upload quota for a user given their permission bitmask.
 // For users with PermissionUnlimitedStorage the quota is free disk space minus a 5 GiB buffer.
 // For all other users it is the lesser of the configured quota and free disk space.
-// TODO: validate if while a file is being upload it's updating in real time the effective quota
 func (service *Service) effectiveQuota(userPermissions int64) (int64, error) {
 	free, err := diskFreeBytes(service.dir)
 	if err != nil {
@@ -440,7 +439,7 @@ func (service *Service) List(userID string, page, pageSize int) ([]FileListItem,
 }
 
 // GetQuota returns quota display info for the given user.
-// Only counts completed, non-expired files.
+// Counts all files for the user regardless of status or expiry.
 func (service *Service) GetQuota(userID string, userPermissions int64) (*QuotaInfo, error) {
 	quota, err := service.effectiveQuota(userPermissions)
 	if err != nil {
@@ -450,9 +449,8 @@ func (service *Service) GetQuota(userID string, userPermissions int64) (*QuotaIn
 	var used int64
 
 	err = service.database.QueryRow(
-		`SELECT COALESCE(SUM(size), 0) FROM kipple_files
-		 WHERE user_id = ? AND status = 'complete' AND expire_at > ?`,
-		userID, time.Now().Unix(),
+		`SELECT COALESCE(SUM(size), 0) FROM kipple_files WHERE user_id = ?`,
+		userID,
 	).Scan(&used)
 	if err != nil {
 		return nil, fmt.Errorf("sum quota: %w", err)

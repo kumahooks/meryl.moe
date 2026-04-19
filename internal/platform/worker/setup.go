@@ -19,7 +19,7 @@ func NewRegistrar(coreDatabase *sql.DB, workerDatabase *sql.DB, kippleDir string
 
 	registrar.Register(Job{
 		Name:     "relay:cleanup",
-		Interval: 1 * time.Hour,
+		Interval: 30 * time.Minute,
 		Run: func(ctx context.Context, _ any) error {
 			return relaywork.Cleanup(ctx, coreDatabase)
 		},
@@ -27,15 +27,15 @@ func NewRegistrar(coreDatabase *sql.DB, workerDatabase *sql.DB, kippleDir string
 
 	registrar.Register(Job{
 		Name:     "kipple:cleanup",
-		Interval: 1 * time.Hour,
+		Interval: 30 * time.Minute,
 		Run: func(ctx context.Context, _ any) error {
 			return kipplework.Cleanup(ctx, coreDatabase)
 		},
 	})
 
 	registrar.Register(Job{
-		Name:     "kipple:orphan-cleanup",
-		Interval: 6 * time.Hour,
+		Name:     "kipple:orphan_cleanup",
+		Interval: 1 * time.Hour,
 		Run: func(ctx context.Context, _ any) error {
 			return kipplework.CleanupOrphans(ctx, coreDatabase, kippleDir)
 		},

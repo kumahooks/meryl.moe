@@ -103,7 +103,7 @@ func (server *Server) Initialize() error {
 	}
 
 	server.logFile = logFile
-	log.Printf("logging: initialized")
+	log.Printf("[logging] initialized")
 
 	var fileSystem fs.FS
 	if server.config.App.Dev {
@@ -117,7 +117,7 @@ func (server *Server) Initialize() error {
 		return err
 	}
 
-	log.Printf("templates: initialized (dev=%v)", server.config.App.Dev)
+	log.Printf("[templates] initialized (dev=%v)", server.config.App.Dev)
 
 	// Home/Entry
 	homeHandler := home.NewHandler(templateManager)
@@ -174,7 +174,7 @@ func (server *Server) Initialize() error {
 		kipple.Routes(kippleHandler, server.database),
 	)
 
-	log.Printf("routes: registered")
+	log.Printf("[routes] registered")
 
 	return nil
 }
@@ -205,8 +205,6 @@ func (server *Server) initLogging() (io.Closer, error) {
 // Blocks until SIGINT or SIGTERM is received, then drains in-flight requests
 // with a 30-second deadline before returning.
 func (server *Server) Start(addr string, workerRunner *worker.JobRunner, workerDatabase *sql.DB) error {
-	log.Printf("Starting server on %s", addr)
-
 	httpServer := &http.Server{
 		Addr:              addr,
 		Handler:           server.router,
@@ -222,6 +220,7 @@ func (server *Server) Start(addr string, workerRunner *worker.JobRunner, workerD
 
 	serverErrors := make(chan error, 1)
 	go func() {
+		log.Printf("[server] starting on %s", addr)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErrors <- err
 		}
