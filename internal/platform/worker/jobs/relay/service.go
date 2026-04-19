@@ -13,12 +13,12 @@ func deleteExpired(ctx context.Context, database *sql.DB) (int64, error) {
 		time.Now().Unix(),
 	)
 	if err != nil {
-		return 0, fmt.Errorf("delete expired relays: %w", err)
+		return 0, fmt.Errorf("[relay:job] delete expired relays: %w", err)
 	}
 
 	deleted, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("rows affected: %w", err)
+		return 0, fmt.Errorf("[relay:job] rows affected: %w", err)
 	}
 
 	return deleted, nil

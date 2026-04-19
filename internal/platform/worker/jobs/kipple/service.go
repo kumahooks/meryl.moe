@@ -20,7 +20,7 @@ func deleteExpired(ctx context.Context, database *sql.DB) (int64, error) {
 		now, staleThreshold,
 	)
 	if err != nil {
-		return 0, fmt.Errorf("query expired kipple files: %w", err)
+		return 0, fmt.Errorf("[kipple:job] query expired kipple files: %w", err)
 	}
 
 	defer rows.Close()
@@ -32,14 +32,14 @@ func deleteExpired(ctx context.Context, database *sql.DB) (int64, error) {
 	for rows.Next() {
 		var e entry
 		if err := rows.Scan(&e.id, &e.path); err != nil {
-			return 0, fmt.Errorf("scan: %w", err)
+			return 0, fmt.Errorf("[kipple:job] scan: %w", err)
 		}
 
 		entries = append(entries, e)
 	}
 
 	if err := rows.Err(); err != nil {
-		return 0, fmt.Errorf("iterate: %w", err)
+		return 0, fmt.Errorf("[kipple:job] iterate: %w", err)
 	}
 
 	var deleted int64
@@ -47,7 +47,7 @@ func deleteExpired(ctx context.Context, database *sql.DB) (int64, error) {
 	for _, e := range entries {
 		result, err := database.ExecContext(ctx, "DELETE FROM kipple_files WHERE id = ?", e.id)
 		if err != nil {
-			return deleted, fmt.Errorf("delete kipple file %s: %w", e.id, err)
+			return deleted, fmt.Errorf("[kipple:job] delete kipple file %s: %w", e.id, err)
 		}
 
 		n, _ := result.RowsAffected()
@@ -64,7 +64,7 @@ func deleteExpired(ctx context.Context, database *sql.DB) (int64, error) {
 func deleteOrphaned(ctx context.Context, database *sql.DB, dir string) (int64, int64, error) {
 	rows, err := database.QueryContext(ctx, "SELECT id, path FROM kipple_files")
 	if err != nil {
-		return 0, 0, fmt.Errorf("query kipple files: %w", err)
+		return 0, 0, fmt.Errorf("[kipple:job] query kipple files: %w", err)
 	}
 
 	defer rows.Close()
@@ -85,7 +85,7 @@ func deleteOrphaned(ctx context.Context, database *sql.DB, dir string) (int64, i
 	}
 
 	if err = rows.Err(); err != nil {
-		return 0, 0, fmt.Errorf("iterate: %w", err)
+		return 0, 0, fmt.Errorf("[kipple:job] iterate: %w", err)
 	}
 
 	var dbOrphans int64
@@ -94,7 +94,7 @@ func deleteOrphaned(ctx context.Context, database *sql.DB, dir string) (int64, i
 		if _, statErr := os.Stat(e.path); os.IsNotExist(statErr) {
 			result, dbErr := database.ExecContext(ctx, "DELETE FROM kipple_files WHERE id = ?", e.id)
 			if dbErr != nil {
-				return dbOrphans, 0, fmt.Errorf("delete orphaned row %s: %w", e.id, dbErr)
+				return dbOrphans, 0, fmt.Errorf("[kipple:job] delete orphaned row %s: %w", e.id, dbErr)
 			}
 
 			n, _ := result.RowsAffected()
@@ -108,7 +108,7 @@ func deleteOrphaned(ctx context.Context, database *sql.DB, dir string) (int64, i
 			return dbOrphans, 0, nil
 		}
 
-		return dbOrphans, 0, fmt.Errorf("read kipple dir: %w", err)
+		return dbOrphans, 0, fmt.Errorf("[kipple:job] read kipple dir: %w", err)
 	}
 
 	var diskOrphans int64

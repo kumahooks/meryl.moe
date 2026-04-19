@@ -15,7 +15,7 @@ func Cleanup(ctx context.Context, database *sql.DB) error {
 	}
 
 	if deleted > 0 {
-		log.Printf("relay: cleanup: deleted %d expired relay(s)", deleted)
+		log.Printf("[relay:job] cleanup: deleted %d expired relay(s)", deleted)
 	}
 
 	return nil

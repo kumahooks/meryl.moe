@@ -15,7 +15,7 @@ func Cleanup(ctx context.Context, database *sql.DB) error {
 	}
 
 	if deleted > 0 {
-		log.Printf("kipple: cleanup: deleted %d expired file(s)", deleted)
+		log.Printf("[kipple:job] cleanup: deleted %d expired file(s)", deleted)
 	}
 
 	return nil
@@ -29,11 +29,11 @@ func CleanupOrphans(ctx context.Context, database *sql.DB, dir string) error {
 	}
 
 	if dbOrphans > 0 {
-		log.Printf("kipple: orphan cleanup: removed %d DB row(s) with missing disk file", dbOrphans)
+		log.Printf("[kipple:job] orphan cleanup: removed %d DB row(s) with missing disk file", dbOrphans)
 	}
 
 	if diskOrphans > 0 {
-		log.Printf("kipple: orphan cleanup: removed %d disk file(s) with no DB row", diskOrphans)
+		log.Printf("[kipple:job] orphan cleanup: removed %d disk file(s) with no DB row", diskOrphans)
 	}
 
 	return nil

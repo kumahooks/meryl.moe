@@ -43,15 +43,20 @@ func main() {
 
 	defer workerDatabase.Close()
 
-	runner := worker.NewRegistrar(coreDatabase, workerDatabase, configuration.Kipple.Dir).JobRunner()
-	server := internal.NewServer(configuration, coreDatabase, dispatch.New(runner))
+	workerJobRunner := worker.NewRegistrar(
+		coreDatabase,
+		workerDatabase,
+		configuration.Kipple.Dir,
+		configuration.Logging.Dir,
+	).JobRunner()
+	server := internal.NewServer(configuration, coreDatabase, dispatch.New(workerJobRunner))
 
 	if err := server.Initialize(); err != nil {
 		log.Fatal("Failed to initialize server:", err)
 	}
 
 	addr := fmt.Sprintf("%s:%d", configuration.Server.Host, configuration.Server.Port)
-	if err := server.Start(addr, runner, workerDatabase); err != nil {
+	if err := server.Start(addr, workerJobRunner, workerDatabase); err != nil {
 		log.Fatal("Server failed:", err)
 	}
 }

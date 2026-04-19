@@ -7,6 +7,7 @@ const (
 	RelayCleanup        = "relay:cleanup"
 	KippleCleanup       = "kipple:cleanup"
 	KippleOrphanCleanup = "kipple:orphan_cleanup"
+	LogCleanup          = "logging:cleanup"
 )
 
 type enqueuer interface {

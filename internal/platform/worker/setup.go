@@ -6,6 +6,7 @@ import (
 	"time"
 
 	kipplework "meryl.moe/internal/platform/worker/jobs/kipple"
+	loggingwork "meryl.moe/internal/platform/worker/jobs/logging"
 	relaywork "meryl.moe/internal/platform/worker/jobs/relay"
 )
 
@@ -13,7 +14,8 @@ import (
 // coreDatabase is used by job implementations (e.g. relay cleanup).
 // workerDatabase is the dedicated job queue database.
 // kippleDir is the directory where kipple files are stored on disk.
-func NewRegistrar(coreDatabase *sql.DB, workerDatabase *sql.DB, kippleDir string) *Registrar {
+// logDir is the directory where application log files are written.
+func NewRegistrar(coreDatabase *sql.DB, workerDatabase *sql.DB, kippleDir string, logDir string) *Registrar {
 	registrar := newRegistrar()
 	registrar.workerDatabase = workerDatabase
 
@@ -38,6 +40,14 @@ func NewRegistrar(coreDatabase *sql.DB, workerDatabase *sql.DB, kippleDir string
 		Interval: 1 * time.Hour,
 		Run: func(ctx context.Context, _ any) error {
 			return kipplework.CleanupOrphans(ctx, coreDatabase, kippleDir)
+		},
+	})
+
+	registrar.Register(Job{
+		Name:     "logging:cleanup",
+		Interval: 24 * time.Hour,
+		Run: func(ctx context.Context, _ any) error {
+			return loggingwork.Cleanup(ctx, logDir)
 		},
 	})
 
