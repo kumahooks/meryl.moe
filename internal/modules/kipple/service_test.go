@@ -99,7 +99,7 @@ func createCompleteUpload(t *testing.T, service *kipple.Service, userID string) 
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "03.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "03.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create upload: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestService_CreateUpload_Succeeds(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "file.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "file.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create upload: %v", err)
 	}
@@ -141,7 +141,7 @@ func TestService_CreateUpload_CreatesFileOnDisk(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "file.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "file.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create upload: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestService_CreateUpload_QuotaExceeded(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	_, err := service.CreateUpload(userID, "big.bin", testQuota+1, kipple.VisibilityLink, futureExpiry())
+	_, err := service.CreateUpload(userID, "big.bin", testQuota+1, kipple.VisibilityLink, futureExpiry(), 0)
 	if !errors.Is(err, kipple.ErrQuotaExceeded) {
 		t.Errorf("error: got %v, want ErrQuotaExceeded", err)
 	}
@@ -171,11 +171,11 @@ func TestService_CreateUpload_QuotaEnforcedAcrossFiles(t *testing.T) {
 
 	half := testQuota / 2
 
-	if _, err := service.CreateUpload(userID, "a.bin", half, kipple.VisibilityLink, futureExpiry()); err != nil {
+	if _, err := service.CreateUpload(userID, "a.bin", half, kipple.VisibilityLink, futureExpiry(), 0); err != nil {
 		t.Fatalf("first upload: %v", err)
 	}
 
-	_, err := service.CreateUpload(userID, "b.bin", half+1, kipple.VisibilityLink, futureExpiry())
+	_, err := service.CreateUpload(userID, "b.bin", half+1, kipple.VisibilityLink, futureExpiry(), 0)
 	if !errors.Is(err, kipple.ErrQuotaExceeded) {
 		t.Errorf("error: got %v, want ErrQuotaExceeded", err)
 	}
@@ -188,11 +188,11 @@ func TestService_CreateUpload_QuotaIsolatedPerUser(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	if _, err := service.CreateUpload(userA, "a.bin", testQuota-1, kipple.VisibilityLink, futureExpiry()); err != nil {
+	if _, err := service.CreateUpload(userA, "a.bin", testQuota-1, kipple.VisibilityLink, futureExpiry(), 0); err != nil {
 		t.Fatalf("user A upload: %v", err)
 	}
 
-	if _, err := service.CreateUpload(userB, "b.bin", testQuota-1, kipple.VisibilityLink, futureExpiry()); err != nil {
+	if _, err := service.CreateUpload(userB, "b.bin", testQuota-1, kipple.VisibilityLink, futureExpiry(), 0); err != nil {
 		t.Errorf("user B quota must be independent of user A; got %v", err)
 	}
 }
@@ -213,7 +213,7 @@ func TestService_GetUpload_Found(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "file.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "file.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -253,7 +253,7 @@ func TestService_AppendChunk_SingleChunk_CompletesUpload(t *testing.T) {
 
 	content := []byte("hewo kipple")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -289,7 +289,7 @@ func TestService_AppendChunk_MultipleChunks_CompletesUpload(t *testing.T) {
 	chunkPartII := fullChunk[midChunk:]
 	fullChunkSize := int64(len(fullChunk))
 
-	upload, err := service.CreateUpload(userID, "f.txt", fullChunkSize, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", fullChunkSize, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -330,7 +330,7 @@ func TestService_AppendChunk_SkippedChunk_OffsetMismatch(t *testing.T) {
 
 	content := []byte("hewu kipple")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -352,7 +352,7 @@ func TestService_AppendChunk_WrongUser_Forbidden(t *testing.T) {
 
 	content := []byte("data")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -387,7 +387,7 @@ func TestService_AppendChunk_ChecksumMismatch_Errors(t *testing.T) {
 
 	content := []byte("real data")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -408,7 +408,7 @@ func TestService_AppendChunk_ChecksumMismatch_OffsetNotAdvanced(t *testing.T) {
 
 	content := []byte("real data")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -433,7 +433,7 @@ func TestService_AppendChunk_UnsupportedChecksum_NoHeader(t *testing.T) {
 
 	content := []byte("data")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -452,7 +452,7 @@ func TestService_AppendChunk_UnsupportedChecksum_WrongAlgorithm(t *testing.T) {
 
 	content := []byte("data")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -485,7 +485,7 @@ func TestService_AppendChunk_WritesToDisk(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "03.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "03.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -589,7 +589,7 @@ func TestService_DeleteFile_WorksForPendingUpload(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -628,7 +628,7 @@ func TestService_Get_PendingFile_NotFound(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -646,7 +646,7 @@ func TestService_Get_ExpiredFile_NotFound(t *testing.T) {
 	service, _ := newService(t, database)
 
 	content := []byte("expired")
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -717,7 +717,7 @@ func TestService_GetInfo_PendingFile_NotFound(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -735,7 +735,7 @@ func TestService_GetInfo_ExpiredFile_NotFound(t *testing.T) {
 	service, _ := newService(t, database)
 
 	content := []byte("expired")
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -770,7 +770,7 @@ func TestService_List_ExcludesPendingFiles(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	if _, err := service.CreateUpload(userID, "pending.txt", 1024, kipple.VisibilityLink, futureExpiry()); err != nil {
+	if _, err := service.CreateUpload(userID, "pending.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 
@@ -791,7 +791,7 @@ func TestService_List_ExcludesExpiredFiles(t *testing.T) {
 	service, _ := newService(t, database)
 
 	content := []byte("expired")
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -908,7 +908,7 @@ func TestService_GetQuota_Empty_ReturnsZeroPercent(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	quota, err := service.GetQuota(userID)
+	quota, err := service.GetQuota(userID, 0)
 	if err != nil {
 		t.Fatalf("get quota: %v", err)
 	}
@@ -926,7 +926,7 @@ func TestService_GetQuota_CountsCompleteNonExpiredFiles(t *testing.T) {
 
 	createCompleteUpload(t, service, userID)
 
-	quota, err := service.GetQuota(userID)
+	quota, err := service.GetQuota(userID, 0)
 	if err != nil {
 		t.Fatalf("get quota: %v", err)
 	}
@@ -942,11 +942,11 @@ func TestService_GetQuota_ExcludesPendingFiles(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	if _, err := service.CreateUpload(userID, "pending.txt", 1024, kipple.VisibilityLink, futureExpiry()); err != nil {
+	if _, err := service.CreateUpload(userID, "pending.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 
-	quota, err := service.GetQuota(userID)
+	quota, err := service.GetQuota(userID, 0)
 	if err != nil {
 		t.Fatalf("get quota: %v", err)
 	}
@@ -963,14 +963,14 @@ func TestService_GetQuota_ExcludesExpiredFiles(t *testing.T) {
 	service, _ := newService(t, database)
 
 	content := []byte("expired")
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, pastExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
 
 	_, _ = service.AppendChunk(upload.ID, userID, 0, bytes.NewReader(content), sha1Header(content))
 
-	quota, err := service.GetQuota(userID)
+	quota, err := service.GetQuota(userID, 0)
 	if err != nil {
 		t.Fatalf("get quota: %v", err)
 	}
@@ -1003,7 +1003,7 @@ func TestService_GetQuota_PercentClampedAt100(t *testing.T) {
 		t.Fatalf("insert: %v", err)
 	}
 
-	quota, err := service.GetQuota(userID)
+	quota, err := service.GetQuota(userID, 0)
 	if err != nil {
 		t.Fatalf("get quota: %v", err)
 	}
@@ -1023,7 +1023,7 @@ func TestService_FormatBytes_LargeFile_ShowsGB(t *testing.T) {
 
 	sizeGB := int64(1024 * 1024 * 1024)
 
-	upload, err := service.CreateUpload(userID, "big.bin", sizeGB, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "big.bin", sizeGB, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1058,7 +1058,7 @@ func TestService_AppendChunk_EmptyBody_ChecksumMismatch(t *testing.T) {
 
 	content := []byte("data")
 
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1081,7 +1081,7 @@ func TestService_AppendChunk_LargeChunk_Succeeds(t *testing.T) {
 	repeats := (4 * 1024 * 1024) / len(base)
 	content := bytes.Repeat(base, repeats+1)
 
-	upload, err := service.CreateUpload(userID, "large.bin", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "large.bin", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1102,7 +1102,7 @@ func TestService_CreateUpload_VisibilityUser_Stored(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1124,7 +1124,7 @@ func TestService_Get_ReturnsVisibility(t *testing.T) {
 	service, _ := newService(t, database)
 
 	content := []byte("private")
-	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", int64(len(content)), kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1149,7 +1149,7 @@ func TestService_CreateUpload_ExpiryStoredCorrectly(t *testing.T) {
 
 	expiry := time.Now().Add(7 * 24 * time.Hour).Truncate(time.Second)
 
-	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, expiry)
+	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, expiry, 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1170,7 +1170,7 @@ func TestService_AppendChunk_ReaderError_ReturnsError(t *testing.T) {
 
 	service, _ := newService(t, database)
 
-	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.txt", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}

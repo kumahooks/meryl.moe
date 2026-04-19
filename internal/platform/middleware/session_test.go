@@ -169,6 +169,102 @@ func TestRequireAuth_ValidSession_CallsNext(t *testing.T) {
 	}
 }
 
+func insertRole(t *testing.T, database *sql.DB, id int64, name string, permissions int64) {
+	t.Helper()
+
+	if _, err := database.Exec(
+		"INSERT INTO roles (id, name, permissions) VALUES (?, ?, ?)",
+		id, name, permissions,
+	); err != nil {
+		t.Fatalf("insert role %s: %v", name, err)
+	}
+}
+
+func assignRole(t *testing.T, database *sql.DB, userID string, roleID int64) {
+	t.Helper()
+
+	if _, err := database.Exec(
+		"INSERT INTO users_roles (user_id, role_id) VALUES (?, ?)",
+		userID, roleID,
+	); err != nil {
+		t.Fatalf("assign role %d to user %s: %v", roleID, userID, err)
+	}
+}
+
+func captureUser(t *testing.T, database *sql.DB, rawToken string) auth.User {
+	t.Helper()
+
+	var capturedUser auth.User
+
+	next := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		user, ok := auth.AuthUser(request.Context())
+		if !ok {
+			t.Error("expected user in context, got none")
+			return
+		}
+
+		capturedUser = user
+	})
+
+	handler := middleware.LoadAuth(database)(next)
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.AddCookie(&http.Cookie{Name: "session", Value: rawToken})
+
+	handler.ServeHTTP(httptest.NewRecorder(), request)
+
+	return capturedUser
+}
+
+func TestLoadAuth_ValidSession_NoRoles_ZeroPermissions(t *testing.T) {
+	database := openTestDB(t)
+	rawToken := strings.Repeat("noroles", 8)
+
+	insertTestSession(t, database, rawToken, time.Now().Add(time.Hour).Unix())
+
+	user := captureUser(t, database, rawToken)
+
+	if user.Permissions != 0 {
+		t.Errorf("permissions: got %d, want 0", user.Permissions)
+	}
+}
+
+func TestLoadAuth_ValidSession_SingleRole_PermissionsLoaded(t *testing.T) {
+	database := openTestDB(t)
+	rawToken := strings.Repeat("singlerole", 6)
+
+	insertTestSession(t, database, rawToken, time.Now().Add(time.Hour).Unix())
+	insertRole(t, database, 1, "god", auth.PermissionUnlimitedStorage)
+	assignRole(t, database, testUserID, 1)
+
+	user := captureUser(t, database, rawToken)
+
+	if user.Permissions != auth.PermissionUnlimitedStorage {
+		t.Errorf("permissions: got %d, want %d", user.Permissions, auth.PermissionUnlimitedStorage)
+	}
+}
+
+func TestLoadAuth_ValidSession_MultipleRoles_PermissionsORed(t *testing.T) {
+	const permissionA int64 = 1 << 0
+	const permissionB int64 = 1 << 1
+
+	database := openTestDB(t)
+	rawToken := strings.Repeat("multirole", 6)
+
+	insertTestSession(t, database, rawToken, time.Now().Add(time.Hour).Unix())
+	insertRole(t, database, 1, "role-a", permissionA)
+	insertRole(t, database, 2, "role-b", permissionB)
+	assignRole(t, database, testUserID, 1)
+	assignRole(t, database, testUserID, 2)
+
+	user := captureUser(t, database, rawToken)
+
+	want := permissionA | permissionB
+	if user.Permissions != want {
+		t.Errorf("permissions: got %d, want %d", user.Permissions, want)
+	}
+}
+
 func TestRequireAuth_NoSession_RedirectsToRoot(t *testing.T) {
 	database := openTestDB(t)
 

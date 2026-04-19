@@ -19,8 +19,12 @@ func main() {
 	flag.Parse()
 
 	if !*skipWipe {
-		if err := os.Remove(*dbPath); err != nil && !os.IsNotExist(err) {
-			log.Fatalf("remove database: %v", err)
+		for _, suffix := range []string{"", "-wal", "-shm"} {
+			path := *dbPath + suffix
+
+			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+				log.Fatalf("remove %s: %v", path, err)
+			}
 		}
 
 		log.Printf("seed: wiped %s", *dbPath)

@@ -54,7 +54,7 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 
 	user, ok := auth.AuthUser(request.Context())
 	if ok {
-		quota, err := handler.service.GetQuota(user.ID)
+		quota, err := handler.service.GetQuota(user.ID, user.Permissions)
 		if err != nil {
 			log.Printf("kipple: index: quota: %v", err)
 			http.Error(writer, "internal server error", http.StatusInternalServerError)
@@ -90,7 +90,7 @@ func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	quota, err := handler.service.GetQuota(user.ID)
+	quota, err := handler.service.GetQuota(user.ID, user.Permissions)
 	if err != nil {
 		log.Printf("kipple: list: quota: %v", err)
 		http.Error(writer, "internal server error", http.StatusInternalServerError)
@@ -156,7 +156,7 @@ func (handler *Handler) CreateUpload(writer http.ResponseWriter, request *http.R
 
 	user, _ := auth.AuthUser(request.Context())
 
-	upload, err := handler.service.CreateUpload(user.ID, filename, uploadLength, visibility, expireAt)
+	upload, err := handler.service.CreateUpload(user.ID, filename, uploadLength, visibility, expireAt, user.Permissions)
 	if errors.Is(err, ErrQuotaExceeded) {
 		http.Error(writer, "quota exceeded", http.StatusRequestEntityTooLarge)
 		return

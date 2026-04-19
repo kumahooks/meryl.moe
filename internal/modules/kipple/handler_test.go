@@ -392,7 +392,7 @@ func TestHandler_HeadUpload_WrongUser_Returns404(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestHandler_HeadUpload_Valid_ReturnsOffsetAndLength(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -453,7 +453,7 @@ func TestHandler_AppendChunk_WrongContentType_Returns415(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -480,7 +480,7 @@ func TestHandler_AppendChunk_MissingUploadOffset_Returns400(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -506,7 +506,7 @@ func TestHandler_AppendChunk_NegativeOffset_Returns400(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -533,7 +533,7 @@ func TestHandler_AppendChunk_NonNumericOffset_Returns400(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -591,7 +591,7 @@ func TestHandler_AppendChunk_WrongUser_Returns403(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -624,7 +624,7 @@ func TestHandler_AppendChunk_OffsetMismatch_Returns409(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -660,7 +660,7 @@ func TestHandler_AppendChunk_UnsupportedChecksum_Returns400(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -693,7 +693,7 @@ func TestHandler_AppendChunk_ChecksumMismatch_Returns400(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -726,7 +726,7 @@ func TestHandler_AppendChunk_Valid_Returns204WithUpdatedOffset(t *testing.T) {
 
 	content := loadTestFixture(t)
 
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -812,7 +812,7 @@ func TestHandler_TerminateUpload_WrongUser_Returns403(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -837,7 +837,7 @@ func TestHandler_TerminateUpload_Valid_Returns204(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -862,7 +862,7 @@ func TestHandler_TerminateUpload_RemovesDBRow(t *testing.T) {
 	service, _ := newService(t, database)
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
-	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", 1024, kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1015,7 +1015,7 @@ func TestHandler_View_PrivateFile_WithoutAuth_Redirects(t *testing.T) {
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1040,7 +1040,7 @@ func TestHandler_View_PrivateFile_WithNonOwner_Redirects(t *testing.T) {
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1068,7 +1068,7 @@ func TestHandler_View_PrivateFile_WithOwner_Renders(t *testing.T) {
 	handler := kipple.NewHandler(renderer, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1193,7 +1193,7 @@ func TestHandler_Download_ExpiredFile_Redirects(t *testing.T) {
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, pastExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, pastExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1217,7 +1217,7 @@ func TestHandler_Download_PrivateFile_WithoutAuth_Redirects(t *testing.T) {
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1242,7 +1242,7 @@ func TestHandler_Download_PrivateFile_WithNonOwner_Redirects(t *testing.T) {
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityUser, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -1275,6 +1275,7 @@ func TestHandler_Download_PrivateFile_WithOwner_ServesContent(t *testing.T) {
 		int64(len(originalContent)),
 		kipple.VisibilityUser,
 		futureExpiry(),
+		0,
 	)
 	if err != nil {
 		t.Fatalf("create: %v", err)
@@ -1305,7 +1306,7 @@ func TestHandler_Download_PendingFile_Redirects(t *testing.T) {
 	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	content := loadTestFixture(t)
-	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry())
+	upload, err := service.CreateUpload(userID, "f.gif", int64(len(content)), kipple.VisibilityLink, futureExpiry(), 0)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}

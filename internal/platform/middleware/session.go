@@ -37,11 +37,40 @@ func LoadAuth(database *sql.DB) func(http.Handler) http.Handler {
 				return
 			}
 
+			var userPermissions int64
+			rows, err := database.QueryContext(request.Context(),
+				`SELECT r.permissions FROM users_roles ur
+				 JOIN roles r ON r.id = ur.role_id
+				 WHERE ur.user_id = ?`, userID)
+			if err != nil {
+				next.ServeHTTP(writer, request)
+				return
+			}
+
+			for rows.Next() {
+				var rolePermissions int64
+				if err := rows.Scan(&rolePermissions); err != nil {
+					rows.Close()
+					next.ServeHTTP(writer, request)
+					return
+				}
+
+				userPermissions |= rolePermissions
+			}
+
+			rows.Close()
+
+			if err := rows.Err(); err != nil {
+				next.ServeHTTP(writer, request)
+				return
+			}
+
 			ctx := auth.WithUser(
 				request.Context(),
 				auth.User{
-					ID:       userID,
-					Username: username,
+					ID:          userID,
+					Username:    username,
+					Permissions: userPermissions,
 				})
 
 			next.ServeHTTP(writer, request.WithContext(ctx))

@@ -4,13 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
+	"meryl.moe/internal/platform/auth"
 )
 
 var roles = []struct {
 	name        string
-	permissions int
+	permissions int64
 }{
-	{"god", 0},
+	{"god", auth.PermissionUnlimitedStorage},
 	{"human", 0},
 }
 

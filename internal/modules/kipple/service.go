@@ -11,9 +11,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
+	"meryl.moe/internal/platform/auth"
 )
 
 var (
@@ -95,6 +97,56 @@ func NewService(database *sql.DB, dir string, quota int64) *Service {
 	return &Service{database: database, dir: dir, quota: quota}
 }
 
+const godDiskBuffer = 5 * 1024 * 1024 * 1024 // 5 GiB reserved when computing god quota
+
+// effectiveQuota returns the upload quota for a user given their permission bitmask.
+// For users with PermissionUnlimitedStorage the quota is free disk space minus a 5 GiB buffer.
+// For all other users it is the lesser of the configured quota and free disk space.
+// TODO: validate if while a file is being upload it's updating in real time the effective quota
+func (service *Service) effectiveQuota(userPermissions int64) (int64, error) {
+	free, err := diskFreeBytes(service.dir)
+	if err != nil {
+		return 0, err
+	}
+
+	freeBytes := int64(free)
+
+	if userPermissions&auth.PermissionUnlimitedStorage != 0 {
+		quota := freeBytes - godDiskBuffer
+		if quota < 0 {
+			return 0, nil
+		}
+
+		return quota, nil
+	}
+
+	if freeBytes < service.quota {
+		return freeBytes, nil
+	}
+
+	return service.quota, nil
+}
+
+// diskFreeBytes returns the number of bytes available to unprivileged processes on the
+// filesystem containing path, walking up to the nearest accessible ancestor if needed.
+func diskFreeBytes(path string) (uint64, error) {
+	dir := path
+
+	for {
+		var stat syscall.Statfs_t
+		if err := syscall.Statfs(dir, &stat); err == nil {
+			return stat.Bavail * uint64(stat.Bsize), nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return 0, fmt.Errorf("kipple: disk free: no accessible ancestor of %s", path)
+		}
+
+		dir = parent
+	}
+}
+
 // CreateUpload checks quota atomically, creates the file on disk, and inserts a pending DB row.
 // expireAt is the desired expiry for the completed file.
 func (service *Service) CreateUpload(
@@ -102,8 +154,14 @@ func (service *Service) CreateUpload(
 	size int64,
 	visibility string,
 	expireAt time.Time,
+	userPermissions int64,
 ) (*Upload, error) {
-	if err := os.MkdirAll(service.dir, 0o755); err != nil {
+	quota, err := service.effectiveQuota(userPermissions)
+	if err != nil {
+		return nil, fmt.Errorf("compute quota: %w", err)
+	}
+
+	if err = os.MkdirAll(service.dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create kipple dir: %w", err)
 	}
 
@@ -124,7 +182,7 @@ func (service *Service) CreateUpload(
 		 SELECT ?, ?, ?, ?, 0, 'pending', ?, ?, ?, ?
 		 WHERE (SELECT COALESCE(SUM(size), 0) FROM kipple_files WHERE user_id = ?) + ? <= ?`,
 		uploadID, userID, filename, size, visibility, expireAt.Unix(), filePath, now,
-		userID, size, service.quota,
+		userID, size, quota,
 	)
 	if err != nil {
 		os.Remove(filePath)
@@ -383,10 +441,15 @@ func (service *Service) List(userID string, page, pageSize int) ([]FileListItem,
 
 // GetQuota returns quota display info for the given user.
 // Only counts completed, non-expired files.
-func (service *Service) GetQuota(userID string) (*QuotaInfo, error) {
+func (service *Service) GetQuota(userID string, userPermissions int64) (*QuotaInfo, error) {
+	quota, err := service.effectiveQuota(userPermissions)
+	if err != nil {
+		return nil, fmt.Errorf("compute quota: %w", err)
+	}
+
 	var used int64
 
-	err := service.database.QueryRow(
+	err = service.database.QueryRow(
 		`SELECT COALESCE(SUM(size), 0) FROM kipple_files
 		 WHERE user_id = ? AND status = 'complete' AND expire_at > ?`,
 		userID, time.Now().Unix(),
@@ -396,8 +459,8 @@ func (service *Service) GetQuota(userID string) (*QuotaInfo, error) {
 	}
 
 	percent := 0
-	if service.quota > 0 {
-		percent = int(used * 100 / service.quota)
+	if quota > 0 {
+		percent = int(used * 100 / quota)
 
 		if percent > 100 {
 			percent = 100
@@ -406,7 +469,7 @@ func (service *Service) GetQuota(userID string) (*QuotaInfo, error) {
 
 	return &QuotaInfo{
 		UsedStr:   formatBytes(used),
-		TotalStr:  formatBytes(service.quota),
+		TotalStr:  formatBytes(quota),
 		Percent:   percent,
 		FillStyle: template.HTMLAttr(fmt.Sprintf(`style="width: %d%%"`, percent)),
 	}, nil

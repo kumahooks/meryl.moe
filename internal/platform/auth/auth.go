@@ -20,13 +20,19 @@ import (
 // pair is not valid.
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
+const (
+	// PermissionUnlimitedStorage grants unlimited kipple storage capped only by available disk space.
+	PermissionUnlimitedStorage int64 = 1 << 0
+)
+
 type authContextKey struct{}
 
 // User holds the authenticated user's identity injected into the request context.
 // TODO: make sure this does not leak any weird data
 type User struct {
-	ID       string
-	Username string
+	ID          string
+	Username    string
+	Permissions int64
 }
 
 // WithUser returns a new context with the given User stored under the auth key.
