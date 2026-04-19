@@ -95,7 +95,7 @@ func NewService(database *sql.DB, dir string, quota int64) *Service {
 	return &Service{database: database, dir: dir, quota: quota}
 }
 
-// CreateUpload checks quota, creates the file on disk, and inserts a pending DB row.
+// CreateUpload checks quota atomically, creates the file on disk, and inserts a pending DB row.
 // expireAt is the desired expiry for the completed file.
 func (service *Service) CreateUpload(
 	userID, filename string,
@@ -103,15 +103,6 @@ func (service *Service) CreateUpload(
 	visibility string,
 	expireAt time.Time,
 ) (*Upload, error) {
-	used, err := service.allUsedBytes(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	if used+size > service.quota {
-		return nil, ErrQuotaExceeded
-	}
-
 	if err := os.MkdirAll(service.dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create kipple dir: %w", err)
 	}
@@ -128,14 +119,27 @@ func (service *Service) CreateUpload(
 
 	now := time.Now().Unix()
 
-	_, err = service.database.Exec(
+	result, err := service.database.Exec(
 		`INSERT INTO kipple_files (id, user_id, filename, size, offset, status, visibility, expire_at, path, created_at)
-		 VALUES (?, ?, ?, ?, 0, 'pending', ?, ?, ?, ?)`,
+		 SELECT ?, ?, ?, ?, 0, 'pending', ?, ?, ?, ?
+		 WHERE (SELECT COALESCE(SUM(size), 0) FROM kipple_files WHERE user_id = ?) + ? <= ?`,
 		uploadID, userID, filename, size, visibility, expireAt.Unix(), filePath, now,
+		userID, size, service.quota,
 	)
 	if err != nil {
 		os.Remove(filePath)
 		return nil, fmt.Errorf("insert upload: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		os.Remove(filePath)
+		return nil, fmt.Errorf("check quota: %w", err)
+	}
+
+	if rows == 0 {
+		os.Remove(filePath)
+		return nil, ErrQuotaExceeded
 	}
 
 	return &Upload{
@@ -397,21 +401,6 @@ func (service *Service) GetQuota(userID string) (*QuotaInfo, error) {
 		Percent:   percent,
 		FillStyle: template.HTMLAttr(fmt.Sprintf(`style="width: %d%%"`, percent)),
 	}, nil
-}
-
-// allUsedBytes sums size of all files (any status) for quota enforcement.
-func (service *Service) allUsedBytes(userID string) (int64, error) {
-	var used int64
-
-	err := service.database.QueryRow(
-		"SELECT COALESCE(SUM(size), 0) FROM kipple_files WHERE user_id = ?",
-		userID,
-	).Scan(&used)
-	if err != nil {
-		return 0, fmt.Errorf("sum used bytes: %w", err)
-	}
-
-	return used, nil
 }
 
 func formatBytes(bytes int64) string {

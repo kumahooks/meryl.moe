@@ -107,6 +107,10 @@ func TestHandler_Index_WithAuthUser_SetsUserInData(t *testing.T) {
 	if _, hasUser := dataMap["User"]; !hasUser {
 		t.Error("expected User key for authenticated request")
 	}
+
+	if _, hasQuota := dataMap["Quota"]; !hasQuota {
+		t.Error("expected Quota key for authenticated request")
+	}
 }
 
 func TestHandler_Index_WithoutAuth_NoUserInData(t *testing.T) {
@@ -939,13 +943,12 @@ func TestHandler_Delete_Valid_RemovesDBRow(t *testing.T) {
 	}
 }
 
-func TestHandler_Delete_Valid_RendersQuotaFragment(t *testing.T) {
+func TestHandler_Delete_Valid_Returns204WithHXTrigger(t *testing.T) {
 	database := openTestDB(t)
 	userID := insertTestUser(t, database)
 
 	service, _ := newService(t, database)
-	renderer := &mockRenderer{}
-	handler := kipple.NewHandler(renderer, service)
+	handler := kipple.NewHandler(&mockRenderer{}, service)
 
 	upload := createCompleteUpload(t, service, userID)
 
@@ -957,35 +960,12 @@ func TestHandler_Delete_Valid_RendersQuotaFragment(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	handler.Delete(recorder, request)
 
-	if recorder.Code != http.StatusOK {
-		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusOK)
+	if recorder.Code != http.StatusNoContent {
+		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusNoContent)
 	}
 
-	if renderer.lastFragment != "kipple-quota" {
-		t.Errorf("fragment: got %q, want kipple-quota", renderer.lastFragment)
-	}
-}
-
-func TestHandler_Delete_RendererError_Returns500(t *testing.T) {
-	database := openTestDB(t)
-	userID := insertTestUser(t, database)
-
-	service, _ := newService(t, database)
-	renderer := &mockRenderer{err: errors.New("template failure")}
-	handler := kipple.NewHandler(renderer, service)
-
-	upload := createCompleteUpload(t, service, userID)
-
-	request := withAuth(
-		withKippleRouteID(httptest.NewRequest(http.MethodDelete, "/kipple/"+upload.ID, nil), upload.ID),
-		userID,
-	)
-
-	recorder := httptest.NewRecorder()
-	handler.Delete(recorder, request)
-
-	if recorder.Code != http.StatusInternalServerError {
-		t.Errorf("status: got %d, want %d", recorder.Code, http.StatusInternalServerError)
+	if recorder.Header().Get("HX-Trigger") != "kippleFileDeleted" {
+		t.Errorf("HX-Trigger: got %q, want kippleFileDeleted", recorder.Header().Get("HX-Trigger"))
 	}
 }
 

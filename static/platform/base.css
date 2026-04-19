@@ -836,6 +836,7 @@ dialog.relay-dialog::backdrop {
 	left: 0;
 	height: 4px;
 	background: #804654;
+	transition: width 300ms ease-out;
 }
 
 .kipple-table {
@@ -891,6 +892,50 @@ dialog.relay-dialog::backdrop {
 	max-width: 0;
 }
 
+
+@keyframes kipple-row-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.kipple-row {
+	animation: kipple-row-in 150ms ease-out both;
+}
+
+.kipple-row:nth-child(2) {
+	animation-delay: 35ms;
+}
+
+.kipple-row:nth-child(3) {
+	animation-delay: 70ms;
+}
+
+.kipple-row:nth-child(4) {
+	animation-delay: 105ms;
+}
+
+.kipple-row:nth-child(5) {
+	animation-delay: 140ms;
+}
+
+.kipple-row:nth-child(6) {
+	animation-delay: 175ms;
+}
+
+.kipple-row:nth-child(7) {
+	animation-delay: 210ms;
+}
+
+.kipple-row:nth-child(8) {
+	animation-delay: 245ms;
+}
 
 .kipple-row.htmx-swapping td {
 	opacity: 0;

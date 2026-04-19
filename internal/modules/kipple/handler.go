@@ -52,7 +52,15 @@ func (handler *Handler) Index(writer http.ResponseWriter, request *http.Request)
 
 	user, ok := auth.AuthUser(request.Context())
 	if ok {
+		quota, err := handler.service.GetQuota(user.ID)
+		if err != nil {
+			log.Printf("kipple: index: quota: %v", err)
+			http.Error(writer, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
 		data["User"] = user
+		data["Quota"] = quota
 	}
 
 	if err := handler.renderer.Render(writer, request, pageFile, "page-content", data); err != nil {
@@ -73,8 +81,6 @@ func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	// TODO: the quota bar in the UI is blinking with FOUC. We need to initialize it to a
-	// stable initial state first, then fill it with the progress.
 	quota, err := handler.service.GetQuota(user.ID)
 	if err != nil {
 		log.Printf("kipple: list: quota: %v", err)
@@ -91,8 +97,6 @@ func (handler *Handler) List(writer http.ResponseWriter, request *http.Request) 
 }
 
 // CreateUpload handles POST /kipple/upload - creates a new tus upload session.
-// TODO: pending files exist for 1 hour. quota does not take into account pending files,
-// which means an user could potentially exhaust the disk with only pending files
 func (handler *Handler) CreateUpload(writer http.ResponseWriter, request *http.Request) {
 	uploadLengthStr := request.Header.Get("Upload-Length")
 	if uploadLengthStr == "" {
@@ -265,11 +269,7 @@ func (handler *Handler) TerminateUpload(writer http.ResponseWriter, request *htt
 }
 
 // Delete handles DELETE /kipple/:id - deletes a completed file.
-// TODO: when deleting a file, it should update the list. Currently when deleting
-// the last file, it won't update the list to "no kiples yet", as the list never updates
 func (handler *Handler) Delete(writer http.ResponseWriter, request *http.Request) {
-	pageFile := "modules/kipple/kipple.html"
-
 	id := chi.URLParam(request, "id")
 	user, _ := auth.AuthUser(request.Context())
 
@@ -290,19 +290,8 @@ func (handler *Handler) Delete(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	quota, err := handler.service.GetQuota(user.ID)
-	if err != nil {
-		log.Printf("kipple: delete: quota: %v", err)
-		http.Error(writer, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	data := map[string]any{"Quota": quota}
-
-	if err := handler.renderer.Render(writer, request, pageFile, "kipple-quota", data); err != nil {
-		log.Printf("kipple: render delete: %v", err)
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
+	writer.Header().Set("HX-Trigger", "kippleFileDeleted")
+	writer.WriteHeader(http.StatusNoContent)
 }
 
 // View handles GET /kipple/:id - renders the file info page.

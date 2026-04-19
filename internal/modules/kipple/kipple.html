@@ -30,11 +30,11 @@
 
 	<div id="kipple-quota" class="kipple-quota">
 		<span class="kipple-quota-text">
-			<span class="kipple-quota-used"></span>
+			<span class="kipple-quota-used">{{.Quota.UsedStr}}</span> / {{.Quota.TotalStr}}
 		</span>
 
 		<div class="kipple-quota-bar">
-			<div class="kipple-quota-fill" style="width:0%"></div>
+			<div class="kipple-quota-fill" {{.Quota.FillStyle}}></div>
 		</div>
 	</div>
 
@@ -51,7 +51,7 @@
 
 		<tbody id="kipple-list-body"
 			hx-get="/kipple/list"
-			hx-trigger="load, kippleUploaded from:document"
+			hx-trigger="load, kippleUploaded from:document, kippleFileDeleted from:document"
 			hx-target="this"
 			hx-swap="innerHTML">
 		</tbody>

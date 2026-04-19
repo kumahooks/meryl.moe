@@ -5,21 +5,43 @@ class KippleTusUploader {
 		this.uploadUrl = null;
 		this.chunkSize = 8 * 1024 * 1024;
 		this.abortController = null;
+		this.storageKey = `kipple:${file.name}:${file.size}:${file.lastModified}`;
 	}
 
 	async start() {
 		this.abortController = new AbortController();
 
-		await this.create();
+		const stored = localStorage.getItem(this.storageKey);
+		if (stored) {
+			const resumed = await this.tryResume(stored);
+			if (!resumed) await this.create();
+		} else {
+			await this.create();
+		}
 
 		let offset = await this.currentOffset();
 		while (offset < this.file.size) {
 			offset = await this.sendChunk(offset);
 		}
+
+		localStorage.removeItem(this.storageKey);
 	}
 
 	abort() {
 		this.abortController?.abort();
+	}
+
+	async tryResume(uploadUrl) {
+		try {
+			const response = await fetch(uploadUrl, { method: 'HEAD', signal: this.abortController.signal });
+			if (!response.ok) return false;
+
+			this.uploadUrl = uploadUrl;
+
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	async create() {
@@ -40,6 +62,8 @@ class KippleTusUploader {
 
 		this.uploadUrl = response.headers.get('Location');
 		if (!this.uploadUrl) throw new Error('create: no Location header');
+
+		localStorage.setItem(this.storageKey, this.uploadUrl);
 	}
 
 	async currentOffset() {
@@ -156,6 +180,7 @@ class KippleUploader {
 
 			if (uploader?.uploadUrl) {
 				htmx.ajax('DELETE', uploader.uploadUrl, { swap: 'none' });
+				if (uploader.storageKey) localStorage.removeItem(uploader.storageKey);
 			}
 		});
 	}
